@@ -15,84 +15,93 @@ const InterviewSession = () => {
   const [transcript, setTranscript] = useState<Message[]>([]);
   
   // Refs for Web APIs
-  const recognitionRef = useRef<any>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const synthRef = useRef<SpeechSynthesis>(window.speechSynthesis);
-  const isListeningRef = useRef(false); // Track intent reliably
-
+  
+  // Cleanup
   useEffect(() => {
-    // Initialize Speech Recognition
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false; // CHANGED: Easier to manage manually
-      recognition.interimResults = true; 
-      recognition.lang = 'en-US';
-
-      recognition.onresult = async (event: any) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
-
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
-          } else {
-            interimTranscript += event.results[i][0].transcript;
-          }
-        }
-        
-        // Log for debugging
-        if (interimTranscript) console.log("Interim:", interimTranscript);
-        if (finalTranscript) console.log("Final:", finalTranscript);
-
-        if (finalTranscript.trim().length > 0) {
-             console.log("Captured Final:", finalTranscript);
-             await handleUserResponse(finalTranscript);
-        }
-      };
-
-      recognition.onerror = (event: any) => {
-        console.error('Speech recognition error key:', event.error);
-        
-        // Ignore "no-speech" errors, just restart
-        if (event.error === 'no-speech') {
-            return; 
-        }
-
-        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-            setIsListening(false);
-            isListeningRef.current = false;
-        }
-      };
-      
-      recognition.onend = () => {
-        console.log("Speech Recognition Ended. Intent:", isListeningRef.current);
-        // Immediate restart if we still want to listen
-        if (isListeningRef.current) {
-            console.log("Restarting Speech Recognition...");
-            try {
-                recognition.start();
-            } catch (e) {
-                console.log("Restart failed", e);
-            }
-        } else {
-            setIsListening(false);
-        }
-      };
-
-      recognitionRef.current = recognition;
-
-    } else {
-      alert("Browser not supported for Web Speech API");
-    }
-
     return () => {
-      // Cleanup happens in the main cleanup block
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
+      synthRef.current.cancel();
     };
-  }, []); 
+  }, []);
 
-  // ... speak function ...
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
 
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
 
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        
+        // Stop all tracks to release mic
+        stream.getTracks().forEach(track => track.stop());
+
+        if (audioBlob.size > 0) {
+            await processAudio(audioBlob);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsListening(true);
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      alert("Could not access microphone. Please allow permissions.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+      setIsListening(false);
+    }
+  };
+
+  const processAudio = async (audioBlob: Blob) => {
+      try {
+          console.log("Transcribing audio...", audioBlob.size, "bytes");
+          // Optionally show a "Thinking..." state here
+
+          const formData = new FormData();
+          formData.append('audio', audioBlob, 'input.webm');
+
+          const transResponse = await axios.post('http://localhost:5000/api/chat/transcribe', formData, {
+              headers: { 'Content-Type': 'multipart/form-data' }
+          });
+
+          const text = transResponse.data.text;
+          console.log("Transcribed Text:", text);
+
+          if (text && text.trim().length > 0) {
+              await handleUserResponse(text);
+          } else {
+              console.log("No speech detected");
+              // Maybe speak "I didn't catch that?"
+          }
+
+      } catch (error) {
+          console.error("Transcription failed", error);
+      }
+  };
+
+  const toggleMic = () => {
+    if (isListening) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
 
   const speak = (text: string) => {
     if (synthRef.current.speaking) {
@@ -117,7 +126,7 @@ const InterviewSession = () => {
     setTranscript(updatedHistory);
 
     try {
-      console.log("Sending to backend:", { message: text, history: updatedHistory });
+      console.log("Sending to backend:", { message: text });
 
       // 2. Send to Backend
       const response = await axios.post('http://localhost:5000/api/chat', {
@@ -125,7 +134,6 @@ const InterviewSession = () => {
         history: updatedHistory
       });
 
-      console.log("Backend response:", response.data);
       const aiText = response.data.response;
       
       // 3. Add AI Message to State
@@ -151,29 +159,9 @@ const InterviewSession = () => {
 
   const endSession = () => {
     setIsActive(false);
-    isListeningRef.current = false; // Stop intent
-    setIsListening(false);
+    stopRecording();
     setIsSpeaking(false);
     synthRef.current.cancel();
-    if (recognitionRef.current) recognitionRef.current.stop();
-  };
-
-  const toggleMic = () => {
-    console.log("Toggle Mic Clicked. Current:", isListening, "Ref:", isListeningRef.current);
-    if (isListening) {
-      isListeningRef.current = false; // Update intent
-      setIsListening(false); // Update UI immediately
-      recognitionRef.current.stop();
-    } else {
-      isListeningRef.current = true; // Update intent
-      setIsListening(true); // Update UI
-      try {
-        recognitionRef.current.start();
-        console.log("Recognition Started manually");
-      } catch (e) {
-        console.error("Start failed:", e);
-      }
-    }
   };
 
   return (
@@ -196,10 +184,9 @@ const InterviewSession = () => {
                     </div>
                 </div>
             ))}
-             {/* Simple ref to auto-scroll could go here */}
         </div>
 
-        {/* Visualizer Area (Smaller now) */}
+        {/* Visualizer Area */}
         <div className="w-full h-24 flex items-center justify-center bg-gray-50 rounded-xl mb-6 relative overflow-hidden">
              <AudioVisualizer isListening={isListening} isSpeaking={isSpeaking} />
         </div>
@@ -212,8 +199,6 @@ const InterviewSession = () => {
           onToggleMic={toggleMic} 
         />
         
-        {/* ... Manual Input Form ... */}
-
         {/* Debug: Manual Input */}
         {isActive && (
             <form 
@@ -223,7 +208,6 @@ const InterviewSession = () => {
                     if (input.value.trim()) {
                         handleUserResponse(input.value);
                         input.value = '';
-                        setIsListening(false);
                     }
                 }}
                 className="mt-6 w-full max-w-md flex gap-2"
@@ -231,7 +215,7 @@ const InterviewSession = () => {
                 <input 
                     name="manualInput"
                     type="text" 
-                    placeholder="Type your answer manually (debug mode)"
+                    placeholder="Type your answer manually"
                     className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button 

@@ -52,3 +52,30 @@ export const handleChat = async (req, res) => {
         res.status(500).json({ error: "Failed to generate response capabilities." });
     }
 };
+
+export const transcribeAudio = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: "No audio file provided" });
+        }
+
+        const client = getGroqClient();
+        
+        // Convert Buffer to File object (Node 18+ global File)
+        const file = new File([req.file.buffer], "audio.webm", { type: req.file.mimetype });
+
+        const translation = await client.audio.transcriptions.create({
+            file: file,
+            model: "whisper-large-v3",
+            response_format: "json",
+            temperature: 0.0,
+        });
+
+        console.log("Transcription:", translation.text);
+        res.json({ text: translation.text });
+
+    } catch (error) {
+        console.error("Transcription Error:", error);
+        res.status(500).json({ error: "Transcription failed" });
+    }
+};
