@@ -12,25 +12,41 @@ const getGroqClient = () => {
     return groq;
 };
 
-// System prompt to define the AI persona
-const SYSTEM_PROMPT = `You are an experienced technical interviewer. 
-Your goal is to conduct a professional interview.
+// function to generate dynamic system prompt based on context
+const generateSystemPrompt = (context) => {
+    const role = context?.role || "Software Engineer";
+    const skills = context?.skills || "General Software Engineering";
+    const jobDescription = context?.jobDescription ? `\nJOB DESCRIPTION CONTEXT:\n${context.jobDescription}` : "";
+
+    return `You are an experienced technical interviewer for a ${role} position. 
+Your goal is to conduct a professional, realistic interview.
+
+INTERVIEW CONTEXT:
+- Candidate Target Role: ${role}
+- Candidate Skills/Tech Stack: ${skills}
+${jobDescription}
+
+INSTRUCTIONS:
 - Ask one clear question at a time.
-- Start by introducing yourself and asking the candidate to introduce themselves.
-- If the candidate answers correctly, acknowledge it briefly and move to a deeper or related specific question.
+- Start by introducing yourself as the AI Interviewer for this specific role.
+- If the candidate answers correctly, acknowledge it briefly and move to a deeper or related specific question based on the Skills provided.
 - If the candidate struggles, offer a small hint or ask a simpler related question.
 - Keep your responses concise and conversational (suitable for voice output).
 - Do not write code or long explanations unless asked.
-- Focus on technical topics relevant to the job description provided (or general software engineering if none).`;
+- Focus strictly on the technical skills and requirements relevant to the ${role} and the provided Job Description.`;
+};
 
 export const handleChat = async (req, res) => {
     try {
-        const { message, history } = req.body;
+        const { message, history, context } = req.body;
+
+        // Generate dynamic prompt based on the user's setup
+        const systemPrompt = generateSystemPrompt(context);
 
         // Construct messages array for the LLM
         // history should be an array of { role: 'user' | 'assistant', content: string }
         const messages = [
-            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'system', content: systemPrompt },
             ...(history || []),
             { role: 'user', content: message }
         ];
@@ -38,9 +54,9 @@ export const handleChat = async (req, res) => {
         const client = getGroqClient();
         const chatCompletion = await client.chat.completions.create({
             messages: messages,
-            model: "llama-3.3-70b-versatile", // Updated to supported model
+            model: "llama-3.3-70b-versatile",
             temperature: 0.7,
-            max_tokens: 150, // Keep responses short for voice
+            max_tokens: 200, 
         });
 
         const aiResponse = chatCompletion.choices[0]?.message?.content || "I apologize, I didn't catch that.";

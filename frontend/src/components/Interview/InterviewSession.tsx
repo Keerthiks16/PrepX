@@ -1,14 +1,21 @@
+
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import AudioVisualizer from './AudioVisualizer';
 import Controls from './Controls';
+import type { InterviewConfig } from './InterviewSetup';
 
 type Message = {
   role: 'user' | 'assistant' | 'system';
   content: string;
 };
 
-const InterviewSession = () => {
+interface InterviewSessionProps {
+    config: InterviewConfig;
+    onEndSession: () => void;
+}
+
+const InterviewSession = ({ config, onEndSession }: InterviewSessionProps) => {
   const [isActive, setIsActive] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -129,9 +136,12 @@ const InterviewSession = () => {
       console.log("Sending to backend:", { message: text });
 
       // 2. Send to Backend
+      // We send 'transcript' (previous history) because the backend appends 'message' to it.
+      // If we sent 'updatedHistory', the last message would appear twice.
       const response = await axios.post('http://localhost:5000/api/chat', {
         message: text,
-        history: updatedHistory
+        history: transcript,
+        context: config 
       });
 
       const aiText = response.data.response;
@@ -151,7 +161,7 @@ const InterviewSession = () => {
   const startSession = () => {
     setIsActive(true);
     // Initial greeting
-    const greeting = "Hello! I'm your AI Interviewer. Please introduce yourself.";
+    const greeting = `Hello! I'm your AI Interviewer for the ${config.role} position. Please introduce yourself.`;
     const initialMsg: Message = { role: 'assistant', content: greeting };
     setTranscript([initialMsg]);
     speak(greeting);
@@ -162,23 +172,25 @@ const InterviewSession = () => {
     stopRecording();
     setIsSpeaking(false);
     synthRef.current.cancel();
+    onEndSession(); // Callback to parent
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 text-gray-800 p-4">
-      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center min-h-[600px] max-h-[90vh] overflow-hidden">
-        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-gray-100 p-4">
+      <div className="max-w-4xl w-full bg-gray-800 rounded-2xl shadow-xl p-8 flex flex-col items-center min-h-[600px] max-h-[90vh] overflow-hidden border border-gray-700">
+        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
           AI Interviewer
         </h1>
+        <p className="text-gray-400 text-sm mb-4">Interworking for: <span className="text-blue-400">{config.role}</span></p>
         
         {/* Transcript Area */}
-        <div className="w-full flex-1 overflow-y-auto mb-6 p-4 border-b border-gray-100 space-y-4">
+        <div className="w-full flex-1 overflow-y-auto mb-6 p-4 border-b border-gray-700 space-y-4">
             {transcript.map((msg, idx) => (
                 <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[80%] p-3 rounded-lg ${
                         msg.role === 'user' 
                         ? 'bg-blue-600 text-white rounded-br-none' 
-                        : 'bg-gray-100 text-gray-800 rounded-bl-none'
+                        : 'bg-gray-700 text-gray-200 rounded-bl-none border border-gray-600'
                     }`}>
                         {msg.content}
                     </div>
@@ -187,7 +199,7 @@ const InterviewSession = () => {
         </div>
 
         {/* Visualizer Area */}
-        <div className="w-full h-24 flex items-center justify-center bg-gray-50 rounded-xl mb-6 relative overflow-hidden">
+        <div className="w-full h-24 flex items-center justify-center bg-gray-900/50 rounded-xl mb-6 relative overflow-hidden border border-gray-700/50">
              <AudioVisualizer isListening={isListening} isSpeaking={isSpeaking} />
         </div>
 
@@ -216,11 +228,11 @@ const InterviewSession = () => {
                     name="manualInput"
                     type="text" 
                     placeholder="Type your answer manually"
-                    className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
                 />
                 <button 
                     type="submit"
-                    className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors"
                 >
                     Send
                 </button>
