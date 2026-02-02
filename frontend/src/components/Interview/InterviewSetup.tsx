@@ -31,7 +31,7 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-gray-100 p-4">
+    <div className="w-screen flex flex-col items-center justify-center min-h-screen bg-gray-900 text-gray-100 p-4">
       <div className="max-w-xl w-full bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-700">
         <h1 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
           Interview Setup

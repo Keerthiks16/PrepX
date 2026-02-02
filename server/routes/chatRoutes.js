@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { handleChat, transcribeAudio } from '../controllers/chatController.js';
+import { handleChat, transcribeAudio, generateFeedback } from '../controllers/chatController.js';
 
 const router = express.Router();
 
@@ -16,5 +16,8 @@ router.post('/', (req, res, next) => {
 
 // POST /api/chat/transcribe - Transcribe audio file
 router.post('/transcribe', upload.single('audio'), transcribeAudio);
+
+// POST /api/chat/feedback - Generate interview feedback
+router.post('/feedback', generateFeedback);
 
 export default router;

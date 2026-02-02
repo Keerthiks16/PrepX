@@ -12,7 +12,7 @@ type Message = {
 
 interface InterviewSessionProps {
     config: InterviewConfig;
-    onEndSession: () => void;
+    onEndSession: (feedbackData: any) => void;
 }
 
 const InterviewSession = ({ config, onEndSession }: InterviewSessionProps) => {
@@ -167,16 +167,27 @@ const InterviewSession = ({ config, onEndSession }: InterviewSessionProps) => {
     speak(greeting);
   };
 
-  const endSession = () => {
+  const endSession = async () => {
     setIsActive(false);
     stopRecording();
     setIsSpeaking(false);
     synthRef.current.cancel();
-    onEndSession(); // Callback to parent
+
+    // Generate Feedback
+    try {
+        const response = await axios.post('http://localhost:5000/api/chat/feedback', {
+            history: transcript,
+            context: config
+        });
+        onEndSession(response.data); 
+    } catch (error) {
+        console.error("Failed to generate feedback:", error);
+        onEndSession(null); // Fallback if fails
+    }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-gray-100 p-4">
+    <div className="w-screen flex flex-col items-center justify-center min-h-screen bg-gray-900 text-gray-100 p-4">
       <div className="max-w-4xl w-full bg-gray-800 rounded-2xl shadow-xl p-8 flex flex-col items-center min-h-[600px] max-h-[90vh] overflow-hidden border border-gray-700">
         <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
           AI Interviewer

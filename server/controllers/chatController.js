@@ -29,11 +29,14 @@ ${jobDescription}
 INSTRUCTIONS:
 - Ask one clear question at a time.
 - Start by introducing yourself as the AI Interviewer for this specific role.
-- If the candidate answers correctly, acknowledge it briefly and move to a deeper or related specific question based on the Skills provided.
-- If the candidate struggles, offer a small hint or ask a simpler related question.
-- Keep your responses concise and conversational (suitable for voice output).
+- LISTEN to the candidate's answer.
+- PROVIDE FEEDBACK (Required):
+  * If correct: Acknowledge briefly (1 sentence).
+  * If partially correct/wrong: Provide a brief correction or hint (MAX 2-3 lines). DO NOT lecture.
+- THEN ask the next related question.
+- Keep your total response concise (under 200 words) to prevent cutoff.
 - Do not write code or long explanations unless asked.
-- Focus strictly on the technical skills and requirements relevant to the ${role} and the provided Job Description.`;
+- Focus strictly on the technical skills relevant to the ${role}.`;
 };
 
 export const handleChat = async (req, res) => {
@@ -93,5 +96,74 @@ export const transcribeAudio = async (req, res) => {
     } catch (error) {
         console.error("Transcription Error:", error);
         res.status(500).json({ error: "Transcription failed" });
+    }
+};
+
+// Helper to validate JSON output from LLM
+const parseJSON = (text) => {
+    try {
+        const start = text.indexOf('{');
+        const end = text.lastIndexOf('}');
+        if (start === -1 || end === -1) return null;
+        return JSON.parse(text.substring(start, end + 1));
+    } catch (e) {
+        return null;
+    }
+};
+
+export const generateFeedback = async (req, res) => {
+    try {
+        const { history, context } = req.body;
+        
+        if (!history || history.length < 2) {
+             return res.status(400).json({ error: "Not enough interview data for feedback." });
+        }
+
+        const role = context?.role || "Software Engineer";
+        const skills = context?.skills || "General";
+
+        const systemPrompt = `You are a Senior Hiring Manager. 
+Analyze the following interview transcript for a ${role} position.
+Candidates Skills: ${skills}.
+
+OUTPUT FORMAT:
+Return ONLY a raw JSON object (no markdown, no extra text) with this structure:
+{
+  "rating": <number 0-100>,
+  "summary": "<string, 3 sentences max>",
+  "strengths": ["<string>", "<string>"],
+  "weaknesses": ["<string>", "<string>"],
+  "improvements": ["<string>", "<string>"]
+}
+
+CRITERIA:
+- Rating should reflect technical accuracy, communication clarity, and relevance to the role.
+- Be honest but constructive.`;
+
+        const messages = [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `TRANSCRIPT:\n${JSON.stringify(history)}` }
+        ];
+
+        const client = getGroqClient();
+        const completion = await client.chat.completions.create({
+            messages: messages,
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.3,
+            response_format: { type: "json_object" } 
+        });
+
+        const content = completion.choices[0]?.message?.content;
+        const feedbackData = parseJSON(content);
+
+        if (!feedbackData) {
+            throw new Error("Failed to parse AI response as JSON");
+        }
+
+        res.json(feedbackData);
+
+    } catch (error) {
+        console.error("Feedback Generation Error:", error);
+        res.status(500).json({ error: "Failed to generate feedback" });
     }
 };
