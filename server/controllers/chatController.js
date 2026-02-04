@@ -17,6 +17,7 @@ const generateSystemPrompt = (context) => {
     const role = context?.role || "Software Engineer";
     const skills = context?.skills || "General Software Engineering";
     const jobDescription = context?.jobDescription ? `\nJOB DESCRIPTION CONTEXT:\n${context.jobDescription}` : "";
+    const resumeText = context?.resumeText ? `\nCANDIDATE RESUME/EXPERIENCE:\n${context.resumeText}` : "";
 
     return `You are an experienced technical interviewer for a ${role} position. 
 Your goal is to conduct a professional, realistic interview.
@@ -25,6 +26,7 @@ INTERVIEW CONTEXT:
 - Candidate Target Role: ${role}
 - Candidate Skills/Tech Stack: ${skills}
 ${jobDescription}
+${resumeText}
 
 INSTRUCTIONS:
 - Ask one clear question at a time.

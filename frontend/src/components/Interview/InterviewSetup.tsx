@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export type InterviewConfig = {
   role: string;
   skills: string;
   jobDescription: string;
+  resumeText: string;
+  selectedVoiceURI: string;
 };
 
 interface InterviewSetupProps {
@@ -24,15 +26,37 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
   const [role, setRole] = useState(ROLES[0]);
   const [skills, setSkills] = useState("");
   const [jobDescription, setJobDescription] = useState("");
+  const [resumeText, setResumeText] = useState("");
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
+
+  useEffect(() => {
+    const loadVoices = () => {
+        const voices = window.speechSynthesis.getVoices();
+        setAvailableVoices(voices);
+        if (voices.length > 0) {
+            // Default to Google US or first avail
+            const defaultVoice = voices.find(v => v.name.includes("Google US English")) || voices[0];
+            setSelectedVoiceURI(defaultVoice.voiceURI);
+        }
+    };
+
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    
+    return () => {
+        window.speechSynthesis.onvoiceschanged = null;
+    }
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onStart({ role, skills, jobDescription });
+    onStart({ role, skills, jobDescription, resumeText, selectedVoiceURI });
   };
 
   return (
     <div className="w-screen flex flex-col items-center justify-center min-h-screen bg-gray-900 text-gray-100 p-4">
-      <div className="max-w-xl w-full bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-700">
+      <div className="max-w-xl w-full bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-700 my-8">
         <h1 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
           Interview Setup
         </h1>
@@ -47,7 +71,7 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
                 onChange={(e) => {
                   const val = e.target.value;
                   if (val === "Other") {
-                    setRole(""); // Clear role to force user to type
+                    setRole(""); 
                   } else {
                     setRole(val);
                   }
@@ -58,7 +82,6 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
                 <option value="Other">Other (Type manually)</option>
               </select>
 
-              {/* Show input if role is not in the predefined list or if user selected Other (which sets role to "") */}
               {(!ROLES.includes(role) || role === "") && (
                 <input 
                   type="text"
@@ -84,16 +107,44 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
             />
           </div>
 
+          {/* Resume Input - NEW */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Resume / Experience (Optional)</label>
+            <textarea 
+              value={resumeText}
+              onChange={(e) => setResumeText(e.target.value)}
+              placeholder="Paste your resume text or a brief summary of your experience here..."
+              rows={4}
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-white outline-none resize-none"
+            />
+          </div>
+
           {/* Job Description Input */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Job Description (Optional)</label>
             <textarea 
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
-              placeholder="Paste the job description here..."
-              rows={4}
+              placeholder="Paste the target job description here..."
+              rows={3}
               className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-white outline-none resize-none"
             />
+          </div>
+
+          {/* Voice Selection - NEW */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Interviewer Voice</label>
+            <select 
+              value={selectedVoiceURI}
+              onChange={(e) => setSelectedVoiceURI(e.target.value)}
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-white outline-none"
+            >
+              {availableVoices.map(v => (
+                 <option key={v.voiceURI} value={v.voiceURI}>
+                    {v.name} ({v.lang})
+                 </option>
+              ))}
+            </select>
           </div>
 
           <button 

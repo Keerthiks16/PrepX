@@ -118,7 +118,13 @@ const InterviewSession = ({ config, onEndSession }: InterviewSessionProps) => {
     
     // Attempt to pick a better voice
     const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v => v.name.includes("Google US English") || v.name.includes("Samantha"));
+    // Default priority: Configured voice -> Google US -> First available
+    let preferredVoice = voices.find(v => v.voiceURI === config.selectedVoiceURI);
+    
+    if (!preferredVoice) {
+         preferredVoice = voices.find(v => v.name.includes("Google US English") || v.name.includes("Samantha"));
+    }
+    
     if (preferredVoice) utterance.voice = preferredVoice;
 
     utterance.onstart = () => setIsSpeaking(true);
