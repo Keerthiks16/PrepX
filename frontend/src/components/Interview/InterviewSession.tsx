@@ -192,32 +192,84 @@ const InterviewSession = ({ config, onEndSession }: InterviewSessionProps) => {
     }
   };
 
+  const [viewMode, setViewMode] = useState<'visual' | 'transcript'>('visual');
+
   return (
     <div className="w-screen flex flex-col items-center justify-center min-h-screen bg-gray-900 text-gray-100 p-4">
       <div className="max-w-4xl w-full bg-gray-800 rounded-2xl shadow-xl p-8 flex flex-col items-center min-h-[600px] max-h-[90vh] overflow-hidden border border-gray-700">
-        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
-          AI Interviewer
-        </h1>
-        <p className="text-gray-400 text-sm mb-4">Interworking for: <span className="text-blue-400">{config.role}</span></p>
         
-        {/* Transcript Area */}
-        <div className="w-full flex-1 overflow-y-auto mb-6 p-4 border-b border-gray-700 space-y-4">
-            {transcript.map((msg, idx) => (
-                <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] p-3 rounded-lg ${
-                        msg.role === 'user' 
-                        ? 'bg-blue-600 text-white rounded-br-none' 
-                        : 'bg-gray-700 text-gray-200 rounded-bl-none border border-gray-600'
-                    }`}>
-                        {msg.content}
+        {/* Header with Toggle */}
+        <div className="w-full flex justify-between items-center mb-6">
+            <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
+                AI Interviewer
+                </h1>
+                <p className="text-gray-400 text-sm">Role: <span className="text-blue-400">{config.role}</span></p>
+            </div>
+            
+            <div className="flex bg-gray-700 rounded-lg p-1">
+                <button
+                    onClick={() => setViewMode('visual')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        viewMode === 'visual' ? 'bg-gray-600 text-white shadow' : 'text-gray-400 hover:text-white'
+                    }`}
+                >
+                    Interviewer
+                </button>
+                <button
+                    onClick={() => setViewMode('transcript')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        viewMode === 'transcript' ? 'bg-gray-600 text-white shadow' : 'text-gray-400 hover:text-white'
+                    }`}
+                >
+                    Transcript
+                </button>
+            </div>
+        </div>
+        
+        {/* Main Content Area */}
+        <div className="w-full flex-1 flex flex-col relative overflow-hidden mb-6 border border-gray-700/50 rounded-xl bg-gray-900/30">
+            
+            {/* Visual Mode */}
+            {viewMode === 'visual' && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center animate-fade-in p-6">
+                    <div className="relative w-64 h-64 md:w-80 md:h-80 mb-8">
+                        {/* Avatar Image */}
+                        <div className={`w-full h-full rounded-full overflow-hidden border-4 border-gray-700 shadow-2xl ${isSpeaking ? 'ring-4 ring-blue-500/50 scale-[1.02] transition-all duration-300' : ''}`}>
+                             <img 
+                                src={config.selectedAvatar || "https://via.placeholder.com/300"} 
+                                alt="AI Interviewer" 
+                                className="w-full h-full object-cover"
+                             />
+                        </div>
+                        
+                        {/* Status Indicator */}
+                        <div className={`absolute bottom-4 right-8 w-6 h-6 rounded-full border-2 border-gray-800 ${isSpeaking ? 'bg-green-500 animate-pulse' : isListening ? 'bg-red-500 animate-pulse' : 'bg-gray-500'}`}></div>
+                    </div>
+
+                    {/* Visualizer Overlay */}
+                    <div className="w-full max-w-md h-24">
+                        <AudioVisualizer isListening={isListening} isSpeaking={isSpeaking} />
                     </div>
                 </div>
-            ))}
-        </div>
+            )}
 
-        {/* Visualizer Area */}
-        <div className="w-full h-24 flex items-center justify-center bg-gray-900/50 rounded-xl mb-6 relative overflow-hidden border border-gray-700/50">
-             <AudioVisualizer isListening={isListening} isSpeaking={isSpeaking} />
+            {/* Transcript Mode */}
+            {viewMode === 'transcript' && (
+                <div className="absolute inset-0 overflow-y-auto p-4 space-y-4 animate-fade-in">
+                    {transcript.map((msg, idx) => (
+                        <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-[80%] p-3 rounded-lg ${
+                                msg.role === 'user' 
+                                ? 'bg-blue-600 text-white rounded-br-none' 
+                                : 'bg-gray-700 text-gray-200 rounded-bl-none border border-gray-600'
+                            }`}>
+                                {msg.content}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
 
         <Controls 
@@ -228,7 +280,7 @@ const InterviewSession = ({ config, onEndSession }: InterviewSessionProps) => {
           onToggleMic={toggleMic} 
         />
         
-        {/* Debug: Manual Input */}
+        {/* Debug: Manual Input (Always visible for testing if active) */}
         {isActive && (
             <form 
                 onSubmit={(e) => {
@@ -244,7 +296,7 @@ const InterviewSession = ({ config, onEndSession }: InterviewSessionProps) => {
                 <input 
                     name="manualInput"
                     type="text" 
-                    placeholder="Type your answer manually"
+                    placeholder="Type answer manually..."
                     className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
                 />
                 <button 

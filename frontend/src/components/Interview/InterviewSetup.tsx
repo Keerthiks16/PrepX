@@ -6,6 +6,7 @@ export type InterviewConfig = {
   jobDescription: string;
   resumeText: string;
   selectedVoiceURI: string;
+  selectedAvatar: string;
 };
 
 interface InterviewSetupProps {
@@ -49,9 +50,24 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
     }
   }, []);
 
+  // Load avatars
+  const [avatars, setAvatars] = useState<string[]>([]);
+  const [selectedAvatar, setSelectedAvatar] = useState("");
+
+  useEffect(() => {
+    const loadAssets = async () => {
+        // Load images from assets folder
+        const modules = import.meta.glob('../../assets/interviewer images/*.{jpg,png,jpeg}', { eager: true });
+        const loadedAvatars = Object.values(modules).map((mod: any) => mod.default);
+        setAvatars(loadedAvatars);
+        if (loadedAvatars.length > 0) setSelectedAvatar(loadedAvatars[0]);
+    };
+    loadAssets();
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onStart({ role, skills, jobDescription, resumeText, selectedVoiceURI });
+    onStart({ role, skills, jobDescription, resumeText, selectedVoiceURI, selectedAvatar });
   };
 
   return (
@@ -62,6 +78,25 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Avatar Selection - NEW */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-3">Select Interviewer</label>
+            <div className="grid grid-cols-4 gap-4">
+                {avatars.map((src, idx) => (
+                    <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setSelectedAvatar(src)}
+                        className={`relative rounded-full overflow-hidden aspect-square border-2 transition-all ${
+                            selectedAvatar === src ? 'border-blue-500 scale-110 shadow-blue-500/50 shadow-lg' : 'border-gray-600 hover:border-gray-400 opacity-70 hover:opacity-100'
+                        }`}
+                    >
+                        <img src={src} alt={`Avatar ${idx}`} className="w-full h-full object-cover" />
+                    </button>
+                ))}
+            </div>
+          </div>
+
           {/* Role Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Target Role</label>
@@ -107,7 +142,7 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
             />
           </div>
 
-          {/* Resume Input - NEW */}
+          {/* Resume Input */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Resume / Experience (Optional)</label>
             <textarea 
@@ -131,7 +166,7 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
             />
           </div>
 
-          {/* Voice Selection - NEW */}
+          {/* Voice Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Interviewer Voice</label>
             <select 
