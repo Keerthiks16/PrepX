@@ -1,8 +1,10 @@
 import express from 'express';
 import multer from 'multer';
-import { handleChat, transcribeAudio, generateFeedback } from '../controllers/chatController.js';
+import { handleChat, transcribeAudio, generateFeedback, generateResumeSummary } from '../controllers/chatController.js';
 
 const router = express.Router();
+console.log("Loading chatRoutes...");
+console.log("generateResumeSummary type:", typeof generateResumeSummary);
 
 // Configure Multer for memory storage
 const upload = multer({ storage: multer.memoryStorage() });
@@ -19,5 +21,11 @@ router.post('/transcribe', upload.single('audio'), transcribeAudio);
 
 // POST /api/chat/feedback - Generate interview feedback
 router.post('/feedback', generateFeedback);
+
+// POST /api/chat/resume-summary
+router.post('/resume-summary', (req, res, next) => {
+    console.log('DEBUG: Hit /resume-summary route');
+    next();
+}, generateResumeSummary);
 
 export default router;

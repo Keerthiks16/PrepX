@@ -169,3 +169,36 @@ CRITERIA:
         res.status(500).json({ error: "Failed to generate feedback" });
     }
 };
+
+export const generateResumeSummary = async (req, res) => {
+    try {
+        const { resumeText } = req.body;
+        if (!resumeText) return res.status(400).json({ error: "No text provided" });
+
+        const systemPrompt = `You are a professional Career Coach.
+Summarize the following resume text into a concise, impressive professional profile (max 4-5 sentences).
+Focus on:
+- Key roles and years of experience.
+- Top technical skills.
+- Major achievements.
+- Do not use "I", "me", or "my". Use implicit third person (e.g., "Experienced Software Engineer with...") or first person if requested, but standard is implicit.
+
+Resume Text:
+${resumeText}`;
+
+        const client = getGroqClient();
+        const completion = await client.chat.completions.create({
+            messages: [{ role: 'user', content: systemPrompt }],
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.5,
+            max_tokens: 300
+        });
+
+        const summary = completion.choices[0]?.message?.content?.trim();
+        res.json({ summary });
+
+    } catch (error) {
+        console.error("Resume Summary Error:", error);
+        res.status(500).json({ error: "Failed to summarize resume" });
+    }
+};
