@@ -7,6 +7,7 @@ export type InterviewConfig = {
   resumeText: string;
   selectedVoiceURI: string;
   selectedAvatar: string;
+  interviewType: 'Classical' | 'Resume' | 'Scenario';
 };
 
 interface InterviewSetupProps {
@@ -30,6 +31,7 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
   const [resumeText, setResumeText] = useState("");
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
+  const [interviewType, setInterviewType] = useState<'Classical' | 'Resume' | 'Scenario'>('Classical');
 
   useEffect(() => {
     const loadVoices = () => {
@@ -67,7 +69,7 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onStart({ role, skills, jobDescription, resumeText, selectedVoiceURI, selectedAvatar });
+    onStart({ role, skills, jobDescription, resumeText, selectedVoiceURI, selectedAvatar, interviewType });
   };
 
   return (
@@ -76,6 +78,22 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
         <h1 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
           Interview Setup
         </h1>
+
+        <div className="mb-6 bg-gray-700/50 p-1 rounded-lg flex">
+            {['Classical', 'Resume', 'Scenario'].map((type) => (
+                <button
+                    key={type}
+                    onClick={() => setInterviewType(type as any)}
+                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                        interviewType === type 
+                            ? 'bg-blue-600 text-white shadow-lg' 
+                            : 'text-gray-400 hover:text-gray-200'
+                    }`}
+                >
+                    {type === 'Resume' ? 'Resume Based' : type === 'Scenario' ? 'Scenario Based' : 'Classical'}
+                </button>
+            ))}
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Avatar Selection - NEW */}

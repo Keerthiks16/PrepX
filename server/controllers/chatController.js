@@ -18,9 +18,26 @@ const generateSystemPrompt = (context) => {
     const skills = context?.skills || "General Software Engineering";
     const jobDescription = context?.jobDescription ? `\nJOB DESCRIPTION CONTEXT:\n${context.jobDescription}` : "";
     const resumeText = context?.resumeText ? `\nCANDIDATE RESUME/EXPERIENCE:\n${context.resumeText}` : "";
+    
+    // Default to classical if not specified
+    const mode = context?.interviewType || 'Classical';
 
-    return `You are an experienced technical interviewer for a ${role} position. 
-Your goal is to conduct a professional, realistic interview.
+    const baseIdentity = `You are an experienced technical interviewer for a ${role} position. Your goal is to conduct a professional, realistic interview.`;
+    
+    const commonInstructions = `
+- Ask one clear question at a time.
+- Start by introducing yourself as the AI Interviewer for this specific role and mode.
+- LISTEN to the candidate's answer.
+- PROVIDE FEEDBACK (Required):
+  * If correct: Acknowledge briefly (1 sentence).
+  * If partially correct/wrong: Provide a brief correction or hint (MAX 2-3 lines). DO NOT lecture.
+- THEN ask the next related question.
+- Keep your total response concise (under 200 words).
+- Do not write code or long explanations unless asked.`;
+
+    // MODE 1: Classical (Standard Technical Interview)
+    if (mode === 'Classical') {
+        return `${baseIdentity}
 
 INTERVIEW CONTEXT:
 - Candidate Target Role: ${role}
@@ -29,16 +46,44 @@ ${jobDescription}
 ${resumeText}
 
 INSTRUCTIONS:
-- Ask one clear question at a time.
-- Start by introducing yourself as the AI Interviewer for this specific role.
-- LISTEN to the candidate's answer.
-- PROVIDE FEEDBACK (Required):
-  * If correct: Acknowledge briefly (1 sentence).
-  * If partially correct/wrong: Provide a brief correction or hint (MAX 2-3 lines). DO NOT lecture.
-- THEN ask the next related question.
-- Keep your total response concise (under 200 words) to prevent cutoff.
-- Do not write code or long explanations unless asked.
-- Focus strictly on the technical skills relevant to the ${role}.`;
+${commonInstructions}
+- Focus strictly on the technical skills relevant to the ${role}.
+- Mix of conceptual and practical questions.`;
+    }
+
+    // MODE 2: Resume Based (Deep Dive into Experience)
+    if (mode === 'Resume') {
+        return `${baseIdentity}
+
+INTERVIEW CONTEXT:
+- Candidate Target Role: ${role}
+${resumeText}
+
+INSTRUCTIONS:
+${commonInstructions}
+- Your PRIMARY SOURCE is the candidate's resume/experience provided above.
+- Ask detailed questions about their specific projects, roles, and achievements found in the resume.
+- Probe for depth: "Tell me more about how you implemented X...", "What challenges did you face when building Y?".
+- Verify their claims by asking technical details about the tools they listed.`;
+    }
+
+    // MODE 3: Scenario Based (Behavioral & Situational)
+    if (mode === 'Scenario') {
+        return `${baseIdentity}
+
+INTERVIEW CONTEXT:
+- Candidate Target Role: ${role}
+- Candidate Skills: ${skills}
+
+INSTRUCTIONS:
+${commonInstructions}
+- Focus on "What would you do if..." and "Tell me about a time..." questions.
+- Cover System Design scenarios, conflict resolution, production outages, and architectural decisions.
+- Evaluate their problem-solving process, not just the final answer.
+- Present a scenario, wait for their approach, then complicate/evolve the scenario.`;
+    }
+
+    return baseIdentity; // Fallback
 };
 
 export const handleChat = async (req, res) => {
