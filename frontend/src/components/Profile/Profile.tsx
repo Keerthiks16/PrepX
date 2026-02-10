@@ -190,6 +190,39 @@ const Profile = () => {
                             </div>
                         )}
                     </div>
+                    {/* Contact Links */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-gray-400 mb-1 text-sm">LinkedIn URL</label>
+                            <input 
+                                disabled={!isEditing}
+                                value={formData.linkedin || ''}
+                                onChange={(e) => setFormData({...formData, linkedin: e.target.value})}
+                                className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 outline-none disabled:opacity-50"
+                                placeholder="https://linkedin.com/in/..."
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-gray-400 mb-1 text-sm">GitHub URL</label>
+                            <input 
+                                disabled={!isEditing}
+                                value={formData.github || ''}
+                                onChange={(e) => setFormData({...formData, github: e.target.value})}
+                                className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 outline-none disabled:opacity-50"
+                                placeholder="https://github.com/..."
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-gray-400 mb-1 text-sm">Portfolio URL</label>
+                            <input 
+                                disabled={!isEditing}
+                                value={formData.portfolio || ''}
+                                onChange={(e) => setFormData({...formData, portfolio: e.target.value})}
+                                className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 outline-none disabled:opacity-50"
+                                placeholder="https://myportfolio.com"
+                            />
+                        </div>
+                    </div>
                     <div>
                         <div className="flex justify-between items-center mb-1">
                             <label className="block text-sm text-gray-400">Resume Summary / Context</label>

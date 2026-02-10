@@ -101,37 +101,44 @@ const getUserProfile = async (req, res) => {
 // @desc    Update user profile
 // @route   PUT /api/auth/profile
 // @access  Private
-const updateUserProfile = async (req, res) => {
-  const user = await User.findById(req.user._id);
+export const updateProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (user) {
+            user.name = req.body.name || user.name;
+            user.email = req.body.email || user.email;
+            user.skills = req.body.skills || user.skills;
+            user.currentRole = req.body.currentRole || user.currentRole;
+            user.projects = req.body.projects || user.projects;
+            user.resumeContext = req.body.resumeContext || user.resumeContext;
+            user.experienceLevel = req.body.experienceLevel || user.experienceLevel;
+            
+            // New Fields
+            user.linkedin = req.body.linkedin || user.linkedin;
+            user.github = req.body.github || user.github;
+            user.portfolio = req.body.portfolio || user.portfolio;
 
-  if (user) {
-    user.name = req.body.name || user.name;
-    user.email = req.body.email || user.email;
-    
-    // Career specific updates
-    user.resumeContext = req.body.resumeContext || user.resumeContext;
-    user.skills = req.body.skills || user.skills;
-    user.experienceLevel = req.body.experienceLevel || user.experienceLevel;
-    user.projects = req.body.projects || user.projects;
-
-    if (req.body.password) {
-      user.password = req.body.password;
+            const updatedUser = await user.save();
+            
+            res.json({
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                skills: updatedUser.skills,
+                currentRole: updatedUser.currentRole,
+                projects: updatedUser.projects,
+                resumeContext: updatedUser.resumeContext,
+                experienceLevel: updatedUser.experienceLevel,
+                linkedin: updatedUser.linkedin,
+                github: updatedUser.github,
+                portfolio: updatedUser.portfolio
+            });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
-
-    const updatedUser = await user.save();
-
-    res.json({
-      _id: updatedUser._id,
-      name: updatedUser.name,
-      email: updatedUser.email,
-      resumeContext: updatedUser.resumeContext,
-      skills: updatedUser.skills,
-      experienceLevel: updatedUser.experienceLevel,
-      projects: updatedUser.projects
-    });
-  } else {
-    res.status(404).json({ message: 'User not found' });
-  }
 };
 
 export {
@@ -139,5 +146,4 @@ export {
   loginUser,
   logoutUser,
   getUserProfile,
-  updateUserProfile,
 };

@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { handleChat, transcribeAudio, generateFeedback, generateResumeSummary } from '../controllers/chatController.js';
+import { handleChat, transcribeAudio, generateFeedback, generateResumeSummary, generateNetworkingMessage, generateResumeLatex, generateCoverLetter } from '../controllers/chatController.js';
 
 const router = express.Router();
 console.log("Loading chatRoutes...");
@@ -27,5 +27,23 @@ router.post('/resume-summary', (req, res, next) => {
     console.log('DEBUG: Hit /resume-summary route');
     next();
 }, generateResumeSummary);
+
+// POST /api/chat/networking-message
+router.post('/networking-message', (req, res, next) => {
+    console.log('DEBUG: Hit /networking-message route');
+    next();
+}, generateNetworkingMessage);
+
+// POST /api/chat/resume-latex
+router.post('/resume-latex', (req, res, next) => {
+    console.log('DEBUG: Hit /resume-latex route');
+    next();
+}, generateResumeLatex);
+
+// POST /api/chat/cover-letter
+router.post('/cover-letter', (req, res, next) => {
+    console.log('DEBUG: Hit /cover-letter route');
+    next();
+}, generateCoverLetter);
 
 export default router;

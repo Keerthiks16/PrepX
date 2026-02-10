@@ -13,6 +13,9 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  linkedin: { type: String },
+  github: { type: String },
+  portfolio: { type: String },
   resumeContext: { type: String }, // AI generated summary or raw text
   skills: [{ type: String }],
   experienceLevel: { type: String, enum: ['Entry', 'Mid', 'Senior'], default: 'Entry' },

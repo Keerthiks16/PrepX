@@ -5,9 +5,13 @@ export interface User {
   _id: string;
   name: string;
   email: string;
+  linkedin?: string;
+  github?: string;
+  portfolio?: string;
   resumeContext?: string;
   skills?: string[];
   experienceLevel?: string;
+  currentRole?: string;
   projects?: {
       title: string;
       description?: string;

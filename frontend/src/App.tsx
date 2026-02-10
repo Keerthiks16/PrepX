@@ -6,7 +6,10 @@ import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import Profile from './components/Profile/Profile';
 import JobBoard from './components/Dashboard/JobBoard';
+import Networking from './components/Networking/Networking';
+import ResumeBuilder from './components/Tools/ResumeBuilder';
 import { useAuthStore } from './store/authStore';
+import CoverLetter from './components/Tools/CoverLetter';
 
 const App = () => {
   // Auth State
@@ -14,7 +17,7 @@ const App = () => {
   const [authView, setAuthView] = useState<'login' | 'register'>('login');
   
   // App State (Main Views)
-  const [currentView, setCurrentView] = useState<'home' | 'profile' | 'jobs'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'profile' | 'jobs' | 'networking' | 'resume'>('home');
   const [config, setConfig] = useState<InterviewConfig | null>(null);
   const [feedbackData, setFeedbackData] = useState<any>(null);
 
@@ -74,6 +77,24 @@ const App = () => {
                         Interview
                     </button>
                     <button 
+                         onClick={() => { setCurrentView('networking'); setConfig(null); setFeedbackData(null); }}
+                         className={`text-sm hover:text-white transition-colors ${currentView === 'networking' ? 'text-white font-medium' : 'text-gray-400'}`}
+                    >
+                        Networking
+                    </button>
+                    <button 
+                         onClick={() => { setCurrentView('resume'); setConfig(null); setFeedbackData(null); }}
+                         className={`text-sm hover:text-white transition-colors ${currentView === 'resume' ? 'text-white font-medium' : 'text-gray-400'}`}
+                    >
+                        Resume
+                    </button>
+                    <button 
+                         onClick={() => { setCurrentView('cover-letter'); setConfig(null); setFeedbackData(null); }}
+                         className={`text-sm hover:text-white transition-colors ${currentView === 'cover-letter' ? 'text-white font-medium' : 'text-gray-400'}`}
+                    >
+                        Cover Letter
+                    </button>
+                    <button 
                          onClick={() => { setCurrentView('jobs'); setConfig(null); setFeedbackData(null); }}
                          className={`text-sm hover:text-white transition-colors ${currentView === 'jobs' ? 'text-white font-medium' : 'text-gray-400'}`}
                     >
@@ -101,6 +122,12 @@ const App = () => {
                 <Profile />
             ) : currentView === 'jobs' ? (
                 <JobBoard />
+            ): currentView === 'cover-letter' ? (
+                <CoverLetter/>
+            ) : currentView === 'networking' ? (
+                <Networking />
+            ) : currentView === 'resume' ? (
+                <ResumeBuilder />
             ) : (
                 <>
                     {/* Interview Logic */}
