@@ -323,9 +323,9 @@ export const generateResumeLatex = async (req, res) => {
         if (mode === 'Restructure') {
             instruction = "STRICTLY use the content from 'CURRENT RESUME CONTENT'. Do NOT invent new projects. Rephrase bullet points to match keywords from the Job Description. The goal is to optimize ATS score using ONLY the candidate's real experience.";
         } else if (mode === 'Blend') {
-            instruction = "Hybrid Strategy: Select the 2 most relevant projects from 'CURRENT RESUME CONTENT' and keep them (can rephrase slightly). Then, HALLUCINATE ONE (1) new 'Suggested Project' that is perfectly tailored to the Job Description to bridge any skill gap. Total 3 projects.";
+            instruction = "Hybrid Strategy: Select the 2 most relevant projects from 'CURRENT RESUME CONTENT' and keep them (can rephrase slightly). Then, HALLUCINATE ONE (1) new 'Suggested Project' that is perfectly tailored to the Job Description to bridge any skill gap. Total 3 projects. IMPORTANT: Give the hallucinated project a SPECIFIC, REALISTIC NAME (e.g., 'FlowState: Real-time Analytics' instead of 'Project A').";
         } else if (mode === 'Aggressive') {
-            instruction = "Extreme Strategy: HALLUCINATE THREE (3) completely new projects that are a 100% perfect match for the Job Description. Ignore the candidate's actual projects if they don't fit. The goal is to create a resume that looks like the perfect candidate, regardless of truth.";
+            instruction = "Extreme Strategy: HALLUCINATE THREE (3) completely new projects that are a 100% perfect match for the Job Description. Ignore the candidate's actual projects if they don't fit. The goal is to create a resume that looks like the perfect candidate. IMPORTANT: Give every project a SPECIFIC, CATCHY NAME (e.g., 'Nebula: Cloud Orchestrator', 'FinTrack: AI Finance App').";
         }
 
         const systemPrompt = `You are an expert Resume Architect.
@@ -399,9 +399,13 @@ OUTPUT RULES:
 1. Return ONLY the valid LaTeX code.
 2. Maintain the exact styling (packages, margins, commands) of the USER TEMPLATE.
 3. Fill in the brackets [ ] with the Candidate's info from CURRENT RESUME CONTENT.
-4. If 'Restructure' mode: Do NOT add new projects/companies not found in CURRENT RESUME CONTENT. Only rephrase to highlight keywords from JD and Target Role.
-5. If 'Restructure' mode: The final length should be comparable to the input (not significantly shorter or longer).
-6. Fill in [LANGUAGES], [TOOLS], [CERTIFICATIONS], [ACHIEVEMENTS] based on the input data.
+4. **ATS OPTIMIZATION (CRITICAL):**
+   - Use VARIED, STRONG ACTION VERBS (e.g., Architected, Engineered, Optimized, Spearheaded). Do NOT repeat verbs like 'Developed' or 'Used'.
+   - Ensure PERFECT SPELLING & GRAMMAR. Zero tolerance for errors.
+5. **PROJECT DESCRIPTIONS:**
+   - Structure: "Built [Feature X] using [Tech Stack Y] to achieve [Business Result Z]."
+   - Balance: 50% implementation details (Tech), 50% user-facing features/impact.
+6. **If 'Restructure' mode:** Maintain the original length/density of the resume. Do NOT condense it too much.
 7. Escape special LaTeX characters (e.g., $ becomes \\$, & becomes \\&, % becomes \\%).
 `;
 
