@@ -11,9 +11,10 @@ interface FeedbackData {
 interface FeedbackReportProps {
   data: FeedbackData;
   onRestart: () => void;
+  onCoaching?: () => void; // Optional coaching handler
 }
 
-const FeedbackReport = ({ data, onRestart }: FeedbackReportProps) => {
+const FeedbackReport = ({ data, onRestart, onCoaching }: FeedbackReportProps) => {
   const getRatingColor = (rating: number) => {
     if (rating >= 80) return 'text-green-400';
     if (rating >= 60) return 'text-yellow-400';
@@ -141,6 +142,16 @@ const FeedbackReport = ({ data, onRestart }: FeedbackReportProps) => {
                 Start New Interview
                 <ArrowRight className="w-4 h-4" />
              </button>
+
+             {onCoaching && (
+                <button 
+                    onClick={onCoaching}
+                    className="flex items-center gap-2 px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-full font-semibold transition-all hover:scale-105 ml-4 shadow-lg border border-purple-400"
+                >
+                    <Award className="w-5 h-5" />
+                    Practice Project Pitch
+                </button>
+             )}
         </div>
 
       </div>

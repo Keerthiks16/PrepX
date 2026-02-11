@@ -17,7 +17,7 @@ const App = () => {
   const [authView, setAuthView] = useState<'login' | 'register'>('login');
   
   // App State (Main Views)
-  const [currentView, setCurrentView] = useState<'home' | 'profile' | 'jobs' | 'networking' | 'resume'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'profile' | 'jobs' | 'networking' | 'resume' | 'cover-letter'>('home');
   const [config, setConfig] = useState<InterviewConfig | null>(null);
   const [feedbackData, setFeedbackData] = useState<any>(null);
 
@@ -32,7 +32,15 @@ const App = () => {
 
   const handleEndSession = (data: any) => {
     setFeedbackData(data);
-    setConfig(null); 
+    // We keep config to potentially start coaching session
+    // setConfig(null); 
+  };
+
+  const handleStartCoaching = () => {
+    if (config) {
+        setConfig({ ...config, interviewType: 'Coaching' });
+        setFeedbackData(null);
+    }
   };
 
   const handleRestart = () => {
@@ -134,7 +142,11 @@ const App = () => {
                     {!config && !feedbackData ? (
                         <InterviewSetup onStart={handleStartInterview} />
                     ) : feedbackData ? (
-                        <FeedbackReport data={feedbackData} onRestart={handleRestart} />
+                        <FeedbackReport 
+                            data={feedbackData} 
+                            onRestart={handleRestart} 
+                            onCoaching={config?.interviewType === 'Project' ? handleStartCoaching : undefined}
+                        />
                     ) : (
                         <InterviewSession config={config!} onEndSession={handleEndSession} />
                     )}

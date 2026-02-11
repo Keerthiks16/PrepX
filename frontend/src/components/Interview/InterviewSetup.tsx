@@ -7,7 +7,8 @@ export type InterviewConfig = {
   resumeText: string;
   selectedVoiceURI: string;
   selectedAvatar: string;
-  interviewType: 'Classical' | 'Resume' | 'Scenario';
+  interviewType: 'Classical' | 'Resume' | 'Scenario' | 'Project' | 'Coaching';
+  projectContext?: string;
 };
 
 interface InterviewSetupProps {
@@ -31,7 +32,8 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
   const [resumeText, setResumeText] = useState("");
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
-  const [interviewType, setInterviewType] = useState<'Classical' | 'Resume' | 'Scenario'>('Classical');
+  const [interviewType, setInterviewType] = useState<'Classical' | 'Resume' | 'Scenario' | 'Project'>('Classical');
+  const [projectContext, setProjectContext] = useState("");
 
   useEffect(() => {
     const loadVoices = () => {
@@ -69,7 +71,7 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onStart({ role, skills, jobDescription, resumeText, selectedVoiceURI, selectedAvatar, interviewType });
+    onStart({ role, skills, jobDescription, resumeText, selectedVoiceURI, selectedAvatar, interviewType, projectContext });
   };
 
   return (
@@ -80,7 +82,7 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
         </h1>
 
         <div className="mb-6 bg-gray-700/50 p-1 rounded-lg flex">
-            {['Classical', 'Resume', 'Scenario'].map((type) => (
+            {['Classical', 'Resume', 'Scenario', 'Project'].map((type) => (
                 <button
                     key={type}
                     onClick={() => setInterviewType(type as any)}
@@ -90,7 +92,7 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
                             : 'text-gray-400 hover:text-gray-200'
                     }`}
                 >
-                    {type === 'Resume' ? 'Resume Based' : type === 'Scenario' ? 'Scenario Based' : 'Classical'}
+                    {type === 'Resume' ? 'Resume Based' : type === 'Scenario' ? 'Scenario Based' : type === 'Project' ? 'Project Viva' : 'Classical'}
                 </button>
             ))}
         </div>
@@ -147,6 +149,21 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
               )}
             </div>
           </div>
+
+          {/* Project Context Input (Conditional) */}
+          {interviewType === 'Project' && (
+            <div className="animate-fade-in">
+                <label className="block text-sm font-medium text-gray-300 mb-2">Project Description / README</label>
+                <textarea 
+                  value={projectContext}
+                  onChange={(e) => setProjectContext(e.target.value)}
+                  placeholder="Paste your project's README or detailed description here..."
+                  rows={6}
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-white outline-none resize-none"
+                  required
+                />
+            </div>
+          )}
 
           {/* Skills Input */}
           <div>
