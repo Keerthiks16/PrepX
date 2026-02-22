@@ -32,8 +32,6 @@ const App = () => {
 
   const handleEndSession = (data: any) => {
     setFeedbackData(data);
-    // We keep config to potentially start coaching session
-    // setConfig(null); 
   };
 
   const handleStartCoaching = () => {
@@ -49,13 +47,13 @@ const App = () => {
   };
 
   if (loading) {
-      return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Loading...</div>;
+      return <div className="min-h-screen bg-base-900 flex items-center justify-center text-text-primary">Loading...</div>;
   }
 
   // Not Logged In -> Show Auth Screens
   if (!user) {
       return (
-          <div className="min-h-screen w-full bg-gray-900 flex items-center justify-center p-4">
+          <div className="min-h-screen w-full bg-base-900 flex items-center justify-center p-4">
               {authView === 'login' ? (
                   <Login onSwitch={() => setAuthView('register')} onSuccess={() => {}} />
               ) : (
@@ -65,58 +63,54 @@ const App = () => {
       );
   }
 
+  const navItems = [
+    { id: 'jobs',          label: 'Jobs' },
+    { id: 'resume',        label: 'Resume' },
+    { id: 'cover-letter',  label: 'Cover Letter' },
+    { id: 'networking',    label: 'Networking' },
+  ];
+
   // Logged In -> Show Main App
   return (
-    <div className="min-h-screen w-full bg-gray-900 font-sans text-white">
-        {/* Simple Navbar */}
-        <nav className="border-b border-gray-800 bg-gray-800/50 backdrop-blur-md sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+    <div className="min-h-screen w-full bg-gradient-to-br from-base-900 via-base-800 to-base-900 font-sans text-text-primary">
+        {/* Navbar */}
+        <nav className="border-b border-base-600/50 bg-base-900/80 backdrop-blur-xl sticky top-0 z-50 shadow-lg"> 
+            <div className="w-full px-6 md:px-12 py-4 flex justify-between items-center">
                 <div 
-                    className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text cursor-pointer"
+                    className="text-2xl font-extrabold bg-gradient-to-r from-accent-300 to-accent-200 text-transparent bg-clip-text cursor-pointer hover:opacity-80 transition-opacity"
                     onClick={() => { setCurrentView('home'); setConfig(null); setFeedbackData(null); }}
                 >
-                    AI Career Assistant
+                    <img src="/logo5.png" alt="Logo" className="h-20 w-auto" />
                 </div>
-                <div className="flex gap-4 items-center">
-                    <button 
-                        onClick={() => setCurrentView('home')} 
-                        className={`text-sm hover:text-white transition-colors ${currentView === 'home' ? 'text-white font-medium' : 'text-gray-400'}`}
-                    >
-                        Interview
-                    </button>
-                    <button 
-                         onClick={() => { setCurrentView('networking'); setConfig(null); setFeedbackData(null); }}
-                         className={`text-sm hover:text-white transition-colors ${currentView === 'networking' ? 'text-white font-medium' : 'text-gray-400'}`}
-                    >
-                        Networking
-                    </button>
-                    <button 
-                         onClick={() => { setCurrentView('resume'); setConfig(null); setFeedbackData(null); }}
-                         className={`text-sm hover:text-white transition-colors ${currentView === 'resume' ? 'text-white font-medium' : 'text-gray-400'}`}
-                    >
-                        Resume
-                    </button>
-                    <button 
-                         onClick={() => { setCurrentView('cover-letter'); setConfig(null); setFeedbackData(null); }}
-                         className={`text-sm hover:text-white transition-colors ${currentView === 'cover-letter' ? 'text-white font-medium' : 'text-gray-400'}`}
-                    >
-                        Cover Letter
-                    </button>
-                    <button 
-                         onClick={() => { setCurrentView('jobs'); setConfig(null); setFeedbackData(null); }}
-                         className={`text-sm hover:text-white transition-colors ${currentView === 'jobs' ? 'text-white font-medium' : 'text-gray-400'}`}
-                    >
-                        Job Tracker
-                    </button>
+                <div className="hidden md:flex gap-8 items-center">
+                    <div className="flex bg-base-900 p-1 rounded-full border border-base-600/50">
+                        {navItems.map((item) => {
+                            const isActive = currentView === item.id;
+                            return (
+                                <button 
+                                    key={item.id}
+                                    onClick={() => { setCurrentView(item.id as any); setConfig(null); setFeedbackData(null); }}
+                                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                                        isActive 
+                                            ? 'bg-accent text-base-900 shadow-[0_0_15px_rgba(0,184,148,0.3)]' 
+                                            : 'text-text-secondary hover:text-text-primary hover:bg-base-700/50'
+                                    }`}
+                                >
+                                    {item.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+
                     <button 
                          onClick={() => { setCurrentView('profile'); setConfig(null); setFeedbackData(null); }}
-                         className={`text-sm hover:text-white transition-colors ${currentView === 'profile' ? 'text-white font-medium' : 'text-gray-400'}`}
+                         className={`text-sm font-semibold tracking-wide transition-all ${currentView === 'profile' ? 'text-accent-200 border-b-2 border-accent' : 'text-text-secondary hover:text-text-primary'}`}
                     >
                         Profile
                     </button>
                     <button 
                         onClick={logout}
-                        className="text-sm text-red-400 hover:text-red-300 transition-colors ml-4 border border-red-500/30 px-3 py-1 rounded hover:bg-red-500/10"
+                        className="text-sm text-error/80 hover:text-error transition-colors ml-4 border border-error/20 px-4 py-1.5 rounded-full hover:bg-error/10 font-medium"
                     >
                         Logout
                     </button>

@@ -7,6 +7,6 @@ body {
   width: 100%;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #111827; /* gray-900 */
-  color: #f3f4f6; /* gray-100 */
+  background-color: #0F1419; /* base-900 */
+  color: #F0F2F5; /* text-primary */
 }

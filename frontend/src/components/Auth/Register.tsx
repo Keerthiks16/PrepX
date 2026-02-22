@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuthStore } from '../../store/authStore';
 
 interface RegisterProps {
-  onSwitch: () => void; // Switch to Login
+  onSwitch: () => void;
   onSuccess: () => void;
 }
 
@@ -32,57 +32,57 @@ const Register = ({ onSwitch, onSuccess }: RegisterProps) => {
   };
 
   return (
-    <div className="w-full max-w-md bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700">
-      <h2 className="text-2xl font-bold mb-6 text-center text-white">Create Account</h2>
+    <div className="w-full max-w-md bg-base-800 p-8 rounded-2xl shadow-xl border border-base-600">
+      <h2 className="text-2xl font-bold mb-6 text-center text-text-primary">Create Account</h2>
       
-      {error && <div className="bg-red-500/20 text-red-300 p-3 rounded mb-4 text-sm">{error}</div>}
+      {error && <div className="bg-error/20 text-error p-3 rounded mb-4 text-sm border border-error/50">{error}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-            <label className="block text-gray-400 text-sm mb-1">Name</label>
+            <label className="block text-text-secondary text-sm mb-1">Name</label>
             <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full bg-base-900 border border-base-600 rounded-lg p-2 text-text-primary focus:ring-2 focus:ring-accent outline-none transition-all"
             required
             />
         </div>
 
         <div>
-          <label className="block text-gray-400 text-sm mb-1">Email</label>
+          <label className="block text-text-secondary text-sm mb-1">Email</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full bg-base-900 border border-base-600 rounded-lg p-2 text-text-primary focus:ring-2 focus:ring-accent outline-none transition-all"
             required
           />
         </div>
         
         <div>
-          <label className="block text-gray-400 text-sm mb-1">Password</label>
+          <label className="block text-text-secondary text-sm mb-1">Password</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full bg-base-900 border border-base-600 rounded-lg p-2 text-text-primary focus:ring-2 focus:ring-accent outline-none transition-all"
             required
           />
         </div>
 
         <button
           type="submit"
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors"
+          className="w-full bg-gradient-to-r from-accent-600 to-accent hover:opacity-90 text-white font-bold py-2.5 px-4 rounded-lg transition-all shadow-lg shadow-accent/20"
         >
           Sign Up
         </button>
       </form>
 
       <div className="mt-4 text-center">
-        <p className="text-gray-400 text-sm">
+        <p className="text-text-secondary text-sm">
           Already have an account?{' '}
-          <button onClick={onSwitch} className="text-blue-400 hover:underline">
+          <button onClick={onSwitch} className="text-accent-200 hover:text-accent font-semibold hover:underline">
             Login
           </button>
         </p>

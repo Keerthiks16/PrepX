@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Briefcase, FileText, Users, Code, Cpu } from 'lucide-react';
 
 export type InterviewConfig = {
   role: string;
@@ -40,7 +41,6 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
         const voices = window.speechSynthesis.getVoices();
         setAvailableVoices(voices);
         if (voices.length > 0) {
-            // Default to Google US or first avail
             const defaultVoice = voices.find(v => v.name.includes("Google US English")) || voices[0];
             setSelectedVoiceURI(defaultVoice.voiceURI);
         }
@@ -54,13 +54,11 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
     }
   }, []);
 
-  // Load avatars
   const [avatars, setAvatars] = useState<string[]>([]);
   const [selectedAvatar, setSelectedAvatar] = useState("");
 
   useEffect(() => {
     const loadAssets = async () => {
-        // Load images from assets folder
         const modules = import.meta.glob('../../assets/interviewer images/*.{jpg,png,jpeg}', { eager: true });
         const loadedAvatars = Object.values(modules).map((mod: any) => mod.default);
         setAvatars(loadedAvatars);
@@ -75,32 +73,42 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
   };
 
   return (
-    <div className="w-screen flex flex-col items-center justify-center min-h-screen bg-gray-900 text-gray-100 p-4">
-      <div className="max-w-xl w-full bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-700 my-8">
-        <h1 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
+    <div className="w-full flex flex-col items-center justify-center min-h-screen bg-base-900 text-text-primary p-4">
+      <div className="max-w-4xl w-full bg-base-800 rounded-2xl shadow-xl p-8 border border-base-600 my-8">
+        <h1 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-accent-300 to-accent-200 text-transparent bg-clip-text">
           Interview Setup
         </h1>
 
-        <div className="mb-6 bg-gray-700/50 p-1 rounded-lg flex">
-            {['Classical', 'Resume', 'Scenario', 'Project'].map((type) => (
+        {/* Interview Type Selection */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {[
+                { id: 'Classical', label: 'Classical', icon: Briefcase, desc: 'Standard Q&A' },
+                { id: 'Resume', label: 'Resume', icon: FileText, desc: 'Deep dive into exp' },
+                { id: 'Scenario', label: 'Scenario', icon: Users, desc: 'Situational tests' },
+                { id: 'Project', label: 'Project', icon: Code, desc: 'Technical Viva' },
+            ].map((type) => (
                 <button
-                    key={type}
-                    onClick={() => setInterviewType(type as any)}
-                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-                        interviewType === type 
-                            ? 'bg-blue-600 text-white shadow-lg' 
-                            : 'text-gray-400 hover:text-gray-200'
+                    key={type.id}
+                    onClick={() => setInterviewType(type.id as any)}
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-300 ${
+                        interviewType === type.id
+                            ? 'bg-accent/10 border-accent shadow-[0_0_15px_rgba(0,184,148,0.3)] scale-105' 
+                            : 'bg-base-900 border-base-600/30 hover:border-accent/50 hover:bg-base-900/80 opacity-70 hover:opacity-100'
                     }`}
                 >
-                    {type === 'Resume' ? 'Resume Based' : type === 'Scenario' ? 'Scenario Based' : type === 'Project' ? 'Project Viva' : 'Classical'}
+                    <type.icon className={`w-8 h-8 mb-2 ${interviewType === type.id ? 'text-accent-200' : 'text-text-secondary'}`} />
+                    <span className={`font-bold ${interviewType === type.id ? 'text-text-primary' : 'text-text-secondary'}`}>
+                        {type.label}
+                    </span>
+                    <span className="text-[10px] text-text-secondary/60 mt-1 uppercase tracking-wider">{type.desc}</span>
                 </button>
             ))}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Avatar Selection - NEW */}
+          {/* Avatar Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-3">Select Interviewer</label>
+            <label className="block text-sm font-medium text-text-secondary mb-3">Select Interviewer</label>
             <div className="grid grid-cols-4 gap-4">
                 {avatars.map((src, idx) => (
                     <button
@@ -108,7 +116,7 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
                         type="button"
                         onClick={() => setSelectedAvatar(src)}
                         className={`relative rounded-full overflow-hidden aspect-square border-2 transition-all ${
-                            selectedAvatar === src ? 'border-blue-500 scale-110 shadow-blue-500/50 shadow-lg' : 'border-gray-600 hover:border-gray-400 opacity-70 hover:opacity-100'
+                            selectedAvatar === src ? 'border-accent scale-110 shadow-accent/50 shadow-lg' : 'border-base-600 hover:border-accent opacity-70 hover:opacity-100'
                         }`}
                     >
                         <img src={src} alt={`Avatar ${idx}`} className="w-full h-full object-cover" />
@@ -119,7 +127,7 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
 
           {/* Role Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Target Role</label>
+            <label className="block text-sm font-medium text-text-secondary mb-2">Target Role</label>
             <div className="space-y-3">
               <select 
                 value={ROLES.includes(role) ? role : "Other"}
@@ -131,7 +139,7 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
                     setRole(val);
                   }
                 }}
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-white outline-none"
+                className="w-full px-4 py-2 bg-base-900 border border-base-600 rounded-lg focus:ring-2 focus:ring-accent text-text-primary outline-none transition-all"
               >
                 {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                 <option value="Other">Other (Type manually)</option>
@@ -143,71 +151,71 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   placeholder="Type your specific role (e.g. iOS Developer)"
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-white outline-none animate-fade-in"
+                  className="w-full px-4 py-2 bg-base-900 border border-base-600 rounded-lg focus:ring-2 focus:ring-accent text-text-primary outline-none animate-fade-in transition-all"
                   autoFocus
                 />
               )}
             </div>
           </div>
 
-          {/* Project Context Input (Conditional) */}
+          {/* Project Context */}
           {interviewType === 'Project' && (
             <div className="animate-fade-in">
-                <label className="block text-sm font-medium text-gray-300 mb-2">Project Description / README</label>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Project Description / README</label>
                 <textarea 
                   value={projectContext}
                   onChange={(e) => setProjectContext(e.target.value)}
                   placeholder="Paste your project's README or detailed description here..."
                   rows={6}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-white outline-none resize-none"
+                  className="w-full px-4 py-2 bg-base-900 border border-base-600 rounded-lg focus:ring-2 focus:ring-accent text-text-primary outline-none resize-none transition-all"
                   required
                 />
             </div>
           )}
 
-          {/* Skills Input */}
+          {/* Skills */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Tech Stack / Skills (Optional)</label>
+            <label className="block text-sm font-medium text-text-secondary mb-2">Tech Stack / Skills (Optional)</label>
             <input 
               type="text"
               value={skills}
               onChange={(e) => setSkills(e.target.value)}
               placeholder="e.g. React, Node.js, AWS, Kubernetes"
-              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-white outline-none"
+              className="w-full px-4 py-2 bg-base-900 border border-base-600 rounded-lg focus:ring-2 focus:ring-accent text-text-primary outline-none transition-all"
             />
           </div>
 
-          {/* Resume Input */}
+          {/* Resume */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Resume / Experience (Optional)</label>
+            <label className="block text-sm font-medium text-text-secondary mb-2">Resume / Experience (Optional)</label>
             <textarea 
               value={resumeText}
               onChange={(e) => setResumeText(e.target.value)}
               placeholder="Paste your resume text or a brief summary of your experience here..."
               rows={4}
-              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-white outline-none resize-none"
+              className="w-full px-4 py-2 bg-base-900 border border-base-600 rounded-lg focus:ring-2 focus:ring-accent text-text-primary outline-none resize-none transition-all"
             />
           </div>
 
-          {/* Job Description Input */}
+          {/* Job Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Job Description (Optional)</label>
+            <label className="block text-sm font-medium text-text-secondary mb-2">Job Description (Optional)</label>
             <textarea 
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
               placeholder="Paste the target job description here..."
               rows={3}
-              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-white outline-none resize-none"
+              className="w-full px-4 py-2 bg-base-900 border border-base-600 rounded-lg focus:ring-2 focus:ring-accent text-text-primary outline-none resize-none transition-all"
             />
           </div>
 
-          {/* Voice Selection */}
+          {/* Voice */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Interviewer Voice</label>
+            <label className="block text-sm font-medium text-text-secondary mb-2">Interviewer Voice</label>
             <select 
               value={selectedVoiceURI}
               onChange={(e) => setSelectedVoiceURI(e.target.value)}
-              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-white outline-none"
+              className="w-full px-4 py-2 bg-base-900 border border-base-600 rounded-lg focus:ring-2 focus:ring-accent text-text-primary outline-none transition-all"
             >
               {availableVoices.map(v => (
                  <option key={v.voiceURI} value={v.voiceURI}>
@@ -219,9 +227,12 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
 
           <button 
             type="submit"
-            className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold rounded-lg transition-all transform hover:scale-[1.02] shadow-lg"
+            className="w-full py-4 px-6 bg-gradient-to-r from-accent-600 to-accent text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] shadow-[0_0_20px_rgba(0,184,148,0.4)] border border-accent-200/20 relative overflow-hidden group"
           >
-            Start Interview
+            <span className="relative z-10 flex items-center justify-center gap-2">
+                Start Interview
+                <Cpu className="w-5 h-5 group-hover:rotate-180 transition-transform duration-700" />
+            </span>
           </button>
         </form>
       </div>

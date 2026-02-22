@@ -8,14 +8,11 @@ const Profile = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [msg, setMsg] = useState("");
 
-    // Initialize form with user data
     useEffect(() => {
         if (user) {
             setFormData({
-                name: user.name,
-                email: user.email,
-                skills: user.skills || [],
-                resumeContext: user.resumeContext || "",
+                name: user.name, email: user.email,
+                skills: user.skills || [], resumeContext: user.resumeContext || "",
                 experienceLevel: user.experienceLevel || "Entry",
                 projects: user.projects || []
             });
@@ -24,10 +21,8 @@ const Profile = () => {
 
     const handleSave = async () => {
         try {
-            const { data } = await axios.put('http://localhost:5000/api/auth/profile', formData, {
-                withCredentials: true
-            });
-            login(data); // Update store
+            const { data } = await axios.put('http://localhost:5000/api/auth/profile', formData, { withCredentials: true });
+            login(data);
             setMsg("Profile Updated!");
             setIsEditing(false);
             setTimeout(() => setMsg(""), 3000);
@@ -73,54 +68,50 @@ const Profile = () => {
         }
     };
 
-    if (!user) return <div className="p-8 text-white">Loading...</div>;
+    if (!user) return <div className="p-8 text-text-primary">Loading...</div>;
 
     return (
-        <div className="w-full max-w-4xl mx-auto p-4 md:p-8 bg-gray-900 min-h-screen text-gray-100">
+        <div className="w-full h-full p-6 md:p-8 bg-base-900 min-h-screen text-text-primary">
             <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-300 to-accent-200 text-transparent bg-clip-text">
                     My Profile
                 </h1>
                 <button
                     onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                    className={`px-6 py-2 rounded-lg font-bold transition-all ${
-                        isEditing ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
+                    className={`px-6 py-2 rounded-lg font-bold transition-all shadow-md ${
+                        isEditing 
+                        ? 'bg-gradient-to-r from-accent-600 to-accent hover:opacity-90 text-white' 
+                        : 'bg-base-800 hover:bg-base-700 text-text-secondary border border-base-600'
                     }`}
                 >
                     {isEditing ? "Save Changes" : "Edit Profile"}
                 </button>
             </div>
 
-            {msg && <div className="mb-4 p-3 bg-green-500/20 text-green-300 rounded border border-green-500/50">{msg}</div>}
+            {msg && <div className="mb-4 p-3 bg-accent/20 text-accent-200 rounded border border-accent/50">{msg}</div>}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Basic Info */}
-                <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 space-y-4">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-300">Basic Info</h2>
+                <div className="bg-base-800/80 backdrop-blur-sm p-6 rounded-xl border border-base-600/30 shadow-lg space-y-4 hover:border-accent/30 transition-all">
+                    <h2 className="text-xl font-semibold mb-4 text-text-primary">Basic Info</h2>
                     <div>
-                        <label className="block text-sm text-gray-400 mb-1">Name</label>
-                        <input
-                            disabled={!isEditing}
-                            value={formData.name || ""}
+                        <label className="block text-sm text-text-secondary mb-1">Name</label>
+                        <input disabled={!isEditing} value={formData.name || ""}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white disabled:opacity-50"
+                            className="w-full bg-base-900 border border-base-600 rounded-lg p-2 text-text-primary disabled:opacity-50 focus:ring-2 focus:ring-accent outline-none transition-all"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm text-gray-400 mb-1">Email</label>
-                        <input
-                            disabled
-                            value={user.email}
-                            className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-400 disabled:opacity-50 cursor-not-allowed"
+                        <label className="block text-sm text-text-secondary mb-1">Email</label>
+                        <input disabled value={user.email}
+                            className="w-full bg-base-900 border border-base-600 rounded-lg p-2 text-text-secondary disabled:opacity-50 cursor-not-allowed"
                         />
                     </div>
                      <div>
-                        <label className="block text-sm text-gray-400 mb-1">Experience Level</label>
-                        <select
-                            disabled={!isEditing}
-                            value={formData.experienceLevel || "Entry"}
+                        <label className="block text-sm text-text-secondary mb-1">Experience Level</label>
+                        <select disabled={!isEditing} value={formData.experienceLevel || "Entry"}
                             onChange={(e) => setFormData({ ...formData, experienceLevel: e.target.value })}
-                            className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white disabled:opacity-50"
+                            className="w-full bg-base-900 border border-base-600 rounded-lg p-2 text-text-primary disabled:opacity-50 focus:ring-2 focus:ring-accent outline-none transition-all"
                         >
                             <option value="Entry">Entry Level</option>
                             <option value="Mid">Mid Level</option>
@@ -130,39 +121,36 @@ const Profile = () => {
                 </div>
 
                 {/* Skills & Resume */}
-                <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 space-y-4">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-300">Skills & Resume</h2>
+                <div className="bg-base-800/80 backdrop-blur-sm p-6 rounded-xl border border-base-600/30 shadow-lg space-y-4 hover:border-accent/30 transition-all">
+                    <h2 className="text-xl font-semibold mb-4 text-text-primary">Skills & Resume</h2>
                     <div>
-                        <label className="block text-sm text-gray-400 mb-2">Skills</label>
+                        <label className="block text-sm text-text-secondary mb-2">Skills</label>
                         
-                        {/* Tags Display */}
                         <div className="flex flex-wrap gap-2 mb-3">
                             {formData.skills?.map((skill, index) => (
-                                <span key={index} className="bg-blue-600/20 text-blue-300 px-3 py-1 rounded-full text-sm flex items-center gap-2 border border-blue-500/30">
+                                <span key={index} className={`px-3 py-1 rounded-full text-sm flex items-center gap-2 border shadow-sm ${
+                                    index % 3 === 0 ? 'bg-accent/10 text-accent-200 border-accent/30' :
+                                    index % 3 === 1 ? 'bg-accent-700/20 text-accent-300 border-accent-700/30' :
+                                    'bg-accent-800/20 text-accent-100 border-accent-800/30'
+                                }`}>
                                     {skill}
                                     {isEditing && (
-                                        <button 
-                                            onClick={() => {
+                                        <button onClick={() => {
                                                 const newSkills = [...(formData.skills || [])];
                                                 newSkills.splice(index, 1);
                                                 setFormData({ ...formData, skills: newSkills });
                                             }}
-                                            className="text-blue-400 hover:text-white font-bold"
-                                        >
-                                            ×
-                                        </button>
+                                            className="text-text-secondary hover:text-text-primary font-bold"
+                                        >×</button>
                                     )}
                                 </span>
                             ))}
                         </div>
 
-                        {/* Add Skill Input */}
                         {isEditing && (
                             <div className="flex gap-2">
-                                <input
-                                    id="skill-input"
-                                    placeholder="Add a skill (e.g. React)"
-                                    className="flex-1 bg-gray-700 border border-gray-600 rounded p-2 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                <input id="skill-input" placeholder="Add a skill (e.g. React)"
+                                    className="flex-1 bg-base-900 border border-base-600 rounded-lg p-2 text-text-primary focus:ring-2 focus:ring-accent outline-none transition-all"
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
                                             e.preventDefault();
@@ -174,8 +162,7 @@ const Profile = () => {
                                         }
                                     }}
                                 />
-                                <button
-                                    onClick={() => {
+                                <button onClick={() => {
                                         const input = document.getElementById('skill-input') as HTMLInputElement;
                                         const val = input.value.trim();
                                         if (val && !formData.skills?.includes(val)) {
@@ -183,109 +170,84 @@ const Profile = () => {
                                             input.value = "";
                                         }
                                     }}
-                                    className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white font-bold transition-colors"
-                                >
-                                    Add
-                                </button>
+                                    className="bg-accent hover:bg-accent-300 px-4 py-2 rounded-lg text-base-900 font-bold transition-colors"
+                                >Add</button>
                             </div>
                         )}
                     </div>
                     {/* Contact Links */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label className="block text-gray-400 mb-1 text-sm">LinkedIn URL</label>
-                            <input 
-                                disabled={!isEditing}
-                                value={formData.linkedin || ''}
+                            <label className="block text-text-secondary mb-1 text-sm">LinkedIn URL</label>
+                            <input disabled={!isEditing} value={formData.linkedin || ''}
                                 onChange={(e) => setFormData({...formData, linkedin: e.target.value})}
-                                className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 outline-none disabled:opacity-50"
+                                className="w-full p-2 rounded-lg bg-base-900 text-text-primary border border-base-600 focus:border-accent outline-none disabled:opacity-50 transition-all"
                                 placeholder="https://linkedin.com/in/..."
                             />
                         </div>
                         <div>
-                            <label className="block text-gray-400 mb-1 text-sm">GitHub URL</label>
-                            <input 
-                                disabled={!isEditing}
-                                value={formData.github || ''}
+                            <label className="block text-text-secondary mb-1 text-sm">GitHub URL</label>
+                            <input disabled={!isEditing} value={formData.github || ''}
                                 onChange={(e) => setFormData({...formData, github: e.target.value})}
-                                className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 outline-none disabled:opacity-50"
+                                className="w-full p-2 rounded-lg bg-base-900 text-text-primary border border-base-600 focus:border-accent outline-none disabled:opacity-50 transition-all"
                                 placeholder="https://github.com/..."
                             />
                         </div>
                         <div>
-                            <label className="block text-gray-400 mb-1 text-sm">Portfolio URL</label>
-                            <input 
-                                disabled={!isEditing}
-                                value={formData.portfolio || ''}
+                            <label className="block text-text-secondary mb-1 text-sm">Portfolio URL</label>
+                            <input disabled={!isEditing} value={formData.portfolio || ''}
                                 onChange={(e) => setFormData({...formData, portfolio: e.target.value})}
-                                className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 outline-none disabled:opacity-50"
+                                className="w-full p-2 rounded-lg bg-base-900 text-text-primary border border-base-600 focus:border-accent outline-none disabled:opacity-50 transition-all"
                                 placeholder="https://myportfolio.com"
                             />
                         </div>
                     </div>
                     <div>
                         <div className="flex justify-between items-center mb-1">
-                            <label className="block text-sm text-gray-400">Resume Summary / Context</label>
+                            <label className="block text-sm text-text-secondary">Resume Summary / Context</label>
                             {isEditing && (
-                                <button 
-                                    onClick={() => setShowResumeModal(true)}
-                                    className="text-xs text-blue-400 hover:text-white flex items-center gap-1"
-                                >
-                                    ✨ Generate from Resume
-                                </button>
+                                <button onClick={() => setShowResumeModal(true)}
+                                    className="text-xs text-accent-200 hover:text-accent flex items-center gap-1 font-bold transition-colors"
+                                >✨ Generate from Resume</button>
                             )}
                         </div>
-                        <textarea
-                            disabled={!isEditing}
-                            value={formData.resumeContext || ""}
+                        <textarea disabled={!isEditing} value={formData.resumeContext || ""}
                             onChange={(e) => setFormData({ ...formData, resumeContext: e.target.value })}
-                            rows={4}
-                            placeholder="Paste your resume summary here for the AI..."
-                            className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white disabled:opacity-50 resize-none"
+                            rows={4} placeholder="Paste your resume summary here for the AI..."
+                            className="w-full bg-base-900 border border-base-600 rounded-lg p-2 text-text-primary disabled:opacity-50 resize-none focus:ring-2 focus:ring-accent outline-none transition-all"
                         />
                     </div>
                 </div>
             </div>
 
-            {/* Resume Generator Modal */}
+            {/* Resume Modal */}
             {showResumeModal && (
                 <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-                    <div className="bg-gray-800 p-6 rounded-xl max-w-2xl w-full border border-gray-700 shadow-2xl">
-                        <h2 className="text-xl font-bold mb-4 text-white">Generate Profile Summary</h2>
-                        <p className="text-gray-400 text-sm mb-4">Paste your full resume below. AI will extract key details to create a professional summary.</p>
-                        
-                        <textarea
-                            value={rawResume}
-                            onChange={(e) => setRawResume(e.target.value)}
-                            className="w-full h-48 bg-gray-900 border border-gray-600 rounded p-3 text-sm text-gray-300 mb-4 focus:ring-2 focus:ring-blue-500 outline-none"
+                    <div className="bg-base-800 p-6 rounded-xl max-w-2xl w-full border border-base-600 shadow-2xl">
+                        <h2 className="text-xl font-bold mb-4 text-text-primary">Generate Profile Summary</h2>
+                        <p className="text-text-secondary text-sm mb-4">Paste your full resume below. AI will extract key details to create a professional summary.</p>
+                        <textarea value={rawResume} onChange={(e) => setRawResume(e.target.value)}
+                            className="w-full h-48 bg-base-900 border border-base-600 rounded-lg p-3 text-sm text-text-primary mb-4 focus:ring-2 focus:ring-accent outline-none transition-all"
                             placeholder="Paste resume text here..."
                         />
-                        
                         <div className="flex justify-end gap-3">
-                            <button 
-                                onClick={() => setShowResumeModal(false)}
-                                className="px-4 py-2 text-gray-300 hover:text-white"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleGenerateSummary}
-                                disabled={generating || !rawResume}
-                                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold disabled:opacity-50 flex items-center gap-2"
-                            >
-                                {generating ? "Generating..." : "Generate Summary"}
-                            </button>
+                            <button onClick={() => setShowResumeModal(false)}
+                                className="px-4 py-2 text-text-secondary hover:text-text-primary transition-colors"
+                            >Cancel</button>
+                            <button onClick={handleGenerateSummary} disabled={generating || !rawResume}
+                                className="px-6 py-2 bg-accent hover:bg-accent-300 text-base-900 rounded-lg font-bold disabled:opacity-50 flex items-center gap-2 transition-colors"
+                            >{generating ? "Generating..." : "Generate Summary"}</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Projects Section */}
-            <div className="mt-8 bg-gray-800 p-6 rounded-xl border border-gray-700">
+            {/* Projects */}
+            <div className="mt-8 bg-base-800/80 backdrop-blur-sm p-6 rounded-xl border border-base-600/30 shadow-lg hover:border-accent/30 transition-all">
                 <div className="flex justify-between items-center mb-6">
-                     <h2 className="text-xl font-semibold text-gray-300">Projects</h2>
+                     <h2 className="text-xl font-semibold text-text-primary">Projects</h2>
                      {isEditing && (
-                         <button onClick={addProject} className="text-sm bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded transition-colors">
+                         <button onClick={addProject} className="text-sm bg-accent/20 hover:bg-accent text-accent-200 hover:text-base-900 px-3 py-1 rounded-lg transition-colors font-bold border border-accent/30">
                              + Add Project
                          </button>
                      )}
@@ -293,58 +255,44 @@ const Profile = () => {
 
                 <div className="space-y-6">
                     {formData.projects?.map((proj, idx) => (
-                        <div key={idx} className="bg-gray-900/50 p-4 rounded-lg border border-gray-700/50">
+                        <div key={idx} className="bg-base-900 p-4 rounded-lg border border-base-600/50">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                                <input
-                                    disabled={!isEditing}
-                                    value={proj.title}
+                                <input disabled={!isEditing} value={proj.title}
                                     onChange={(e) => updateProject(idx, 'title', e.target.value)}
                                     placeholder="Project Title"
-                                    className="bg-gray-700 border border-gray-600 rounded p-2 text-white font-bold disabled:opacity-50"
+                                    className="bg-base-900 border border-base-600 rounded-lg p-2 text-text-primary font-bold disabled:opacity-50 focus:ring-2 focus:ring-accent outline-none transition-all"
                                 />
                                 <div className="flex gap-2">
-                                     <input
-                                        disabled={!isEditing}
-                                        value={proj.githubLink || ""}
+                                     <input disabled={!isEditing} value={proj.githubLink || ""}
                                         onChange={(e) => updateProject(idx, 'githubLink', e.target.value)}
                                         placeholder="GitHub Link"
-                                        className="flex-1 bg-gray-700 border border-gray-600 rounded p-2 text-sm text-blue-400 disabled:opacity-50"
+                                        className="flex-1 bg-base-900 border border-base-600 rounded-lg p-2 text-sm text-accent-300 disabled:opacity-50 focus:ring-2 focus:ring-accent outline-none transition-all"
                                     />
-                                    <input
-                                        disabled={!isEditing}
-                                        value={proj.deploymentLink || ""}
+                                    <input disabled={!isEditing} value={proj.deploymentLink || ""}
                                         onChange={(e) => updateProject(idx, 'deploymentLink', e.target.value)}
                                         placeholder="Live Link"
-                                        className="flex-1 bg-gray-700 border border-gray-600 rounded p-2 text-sm text-green-400 disabled:opacity-50"
+                                        className="flex-1 bg-base-900 border border-base-600 rounded-lg p-2 text-sm text-accent-200 disabled:opacity-50 focus:ring-2 focus:ring-accent outline-none transition-all"
                                     />
                                 </div>
                             </div>
-                            
-                            <textarea
-                                disabled={!isEditing}
-                                value={proj.description || ""}
+                            <textarea disabled={!isEditing} value={proj.description || ""}
                                 onChange={(e) => updateProject(idx, 'description', e.target.value)}
-                                placeholder="Brief Description..."
-                                rows={2}
-                                className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-sm text-gray-300 mb-2 disabled:opacity-50 resize-none"
+                                placeholder="Brief Description..." rows={2}
+                                className="w-full bg-base-900 border border-base-600 rounded-lg p-2 text-sm text-text-primary mb-2 disabled:opacity-50 resize-none focus:ring-2 focus:ring-accent outline-none transition-all"
                             />
-                             <textarea
-                                disabled={!isEditing}
-                                value={proj.workflow || ""}
+                             <textarea disabled={!isEditing} value={proj.workflow || ""}
                                 onChange={(e) => updateProject(idx, 'workflow', e.target.value)}
-                                placeholder="Explain the workflow/architecture..."
-                                rows={2}
-                                className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-sm text-gray-400 disabled:opacity-50 resize-none italic"
+                                placeholder="Explain the workflow/architecture..." rows={2}
+                                className="w-full bg-base-900 border border-base-600 rounded-lg p-2 text-sm text-text-secondary disabled:opacity-50 resize-none italic focus:ring-2 focus:ring-accent outline-none transition-all"
                             />
-                            
                             {isEditing && (
-                                <button onClick={() => removeProject(idx)} className="mt-2 text-red-400 text-xs hover:underline">
+                                <button onClick={() => removeProject(idx)} className="mt-2 text-error text-xs hover:text-error/80 hover:underline">
                                     Remove Project
                                 </button>
                             )}
                         </div>
                     ))}
-                    {formData.projects?.length === 0 && <p className="text-gray-500 text-center italic">No projects added yet.</p>}
+                    {formData.projects?.length === 0 && <p className="text-text-secondary/50 text-center italic">No projects added yet.</p>}
                 </div>
             </div>
         </div>
