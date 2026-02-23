@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import InterviewSetup, { type InterviewConfig } from './components/Interview/InterviewSetup';
 import InterviewSession from './components/Interview/InterviewSession';
 import FeedbackReport from './components/Interview/FeedbackReport';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import Profile from './components/Profile/Profile';
+import CoverLetter from './components/Tools/CoverLetter';
+import Loader from './components/Common/Loader';
+import Footer from './components/Common/Footer';
+import Home from './components/Dashboard/Home';
 import JobBoard from './components/Dashboard/JobBoard';
 import Networking from './components/Networking/Networking';
 import ResumeBuilder from './components/Tools/ResumeBuilder';
 import { useAuthStore } from './store/authStore';
-import CoverLetter from './components/Tools/CoverLetter';
 
 const App = () => {
   // Auth State
@@ -17,7 +21,7 @@ const App = () => {
   const [authView, setAuthView] = useState<'login' | 'register'>('login');
   
   // App State (Main Views)
-  const [currentView, setCurrentView] = useState<'home' | 'profile' | 'jobs' | 'networking' | 'resume' | 'cover-letter'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'profile' | 'jobs' | 'networking' | 'resume' | 'cover-letter' | 'interview'>('home');
   const [config, setConfig] = useState<InterviewConfig | null>(null);
   const [feedbackData, setFeedbackData] = useState<any>(null);
 
@@ -47,7 +51,11 @@ const App = () => {
   };
 
   if (loading) {
-      return <div className="min-h-screen bg-base-900 flex items-center justify-center text-text-primary">Loading...</div>;
+      return (
+        <div className="min-h-screen bg-base-900 flex items-center justify-center">
+            <Loader />
+        </div>
+      );
   }
 
   // Not Logged In -> Show Auth Screens
@@ -64,6 +72,7 @@ const App = () => {
   }
 
   const navItems = [
+    { id: 'interview',     label: 'Interview' },
     { id: 'jobs',          label: 'Jobs' },
     { id: 'resume',        label: 'Resume' },
     { id: 'cover-letter',  label: 'Cover Letter' },
@@ -90,12 +99,19 @@ const App = () => {
                                 <button 
                                     key={item.id}
                                     onClick={() => { setCurrentView(item.id as any); setConfig(null); setFeedbackData(null); }}
-                                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                                    className={`relative px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-300 z-10 ${
                                         isActive 
-                                            ? 'bg-accent text-base-900 shadow-[0_0_15px_rgba(0,184,148,0.3)]' 
+                                            ? 'text-base-900' 
                                             : 'text-text-secondary hover:text-text-primary hover:bg-base-700/50'
                                     }`}
                                 >
+                                    {isActive && (
+                                        <motion.div 
+                                            layoutId="activeTab"
+                                            className="absolute inset-0 bg-accent rounded-full -z-10 shadow-[0_0_15px_rgba(0,184,148,0.3)]"
+                                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                        />
+                                    )}
                                     {item.label}
                                 </button>
                             );
@@ -120,7 +136,9 @@ const App = () => {
 
         {/* Main Content */}
         <main className="">
-            {currentView === 'profile' ? (
+            {currentView === 'home' ? (
+                <Home onNavigate={setCurrentView} />
+            ) : currentView === 'profile' ? (
                 <Profile />
             ) : currentView === 'jobs' ? (
                 <JobBoard />
@@ -130,9 +148,8 @@ const App = () => {
                 <Networking />
             ) : currentView === 'resume' ? (
                 <ResumeBuilder />
-            ) : (
-                <>
-                    {/* Interview Logic */}
+            ) : currentView === 'interview' ? (
+                 <>
                     {!config && !feedbackData ? (
                         <InterviewSetup onStart={handleStartInterview} />
                     ) : feedbackData ? (
@@ -145,8 +162,10 @@ const App = () => {
                         <InterviewSession config={config!} onEndSession={handleEndSession} />
                     )}
                 </>
-            )}
+            ) : null}
         </main>
+
+        <Footer onNavigate={setCurrentView} />
     </div>
   );
 };

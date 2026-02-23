@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuthStore, type User } from '../../store/authStore';
+import Loader from '../Common/Loader';
 
 const Profile = () => {
     const { user, login } = useAuthStore();
@@ -68,7 +69,11 @@ const Profile = () => {
         }
     };
 
-    if (!user) return <div className="p-8 text-text-primary">Loading...</div>;
+    if (!user) return (
+      <div className="min-h-screen bg-base-900 flex items-center justify-center">
+        <Loader />
+      </div>
+    );
 
     return (
         <div className="w-full h-full p-6 md:p-8 bg-base-900 min-h-screen text-text-primary">

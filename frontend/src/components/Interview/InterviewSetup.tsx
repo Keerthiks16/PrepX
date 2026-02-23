@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Briefcase, FileText, Users, Code, Cpu } from 'lucide-react';
+import { Briefcase, FileText, Users, Code, Cpu, ChevronDown, ChevronUp } from 'lucide-react';
 
 export type InterviewConfig = {
   role: string;
@@ -35,6 +35,7 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
   const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
   const [interviewType, setInterviewType] = useState<'Classical' | 'Resume' | 'Scenario' | 'Project'>('Classical');
   const [projectContext, setProjectContext] = useState("");
+  const [showAvatars, setShowAvatars] = useState(false);
 
   useEffect(() => {
     const loadVoices = () => {
@@ -107,22 +108,44 @@ const InterviewSetup = ({ onStart }: InterviewSetupProps) => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Avatar Selection */}
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-3">Select Interviewer</label>
-            <div className="grid grid-cols-4 gap-4">
-                {avatars.map((src, idx) => (
-                    <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setSelectedAvatar(src)}
-                        className={`relative rounded-full overflow-hidden aspect-square border-2 transition-all ${
-                            selectedAvatar === src ? 'border-accent scale-110 shadow-accent/50 shadow-lg' : 'border-base-600 hover:border-accent opacity-70 hover:opacity-100'
-                        }`}
-                    >
-                        <img src={src} alt={`Avatar ${idx}`} className="w-full h-full object-cover" />
-                    </button>
-                ))}
+          {/* Avatar Selection */}
+          <div className="bg-base-900/50 p-4 rounded-xl border border-base-600/50">
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                    <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-accent">
+                        <img src={selectedAvatar} alt="Selected Interviewer" className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-text-primary">Current Interviewer</label>
+                        <p className="text-xs text-text-secondary">Ready to start your session</p>
+                    </div>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => setShowAvatars(!showAvatars)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-base-700 hover:bg-base-600 transition-colors text-sm font-semibold"
+                >
+                  {showAvatars ? 'Close Selection' : 'Change Interviewer'}
+                  {showAvatars ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
             </div>
+
+            {showAvatars && (
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-4 pt-4 border-t border-base-600/30 animate-fade-in">
+                    {avatars.map((src, idx) => (
+                        <button
+                            key={idx}
+                            type="button"
+                            onClick={() => { setSelectedAvatar(src); setShowAvatars(false); }}
+                            className={`relative rounded-full overflow-hidden aspect-square border-2 transition-all ${
+                                selectedAvatar === src ? 'border-accent scale-110 shadow-accent/50 shadow-lg' : 'border-base-600 hover:border-accent opacity-70 hover:opacity-100'
+                            }`}
+                        >
+                            <img src={src} alt={`Avatar ${idx}`} className="w-full h-full object-cover" />
+                        </button>
+                    ))}
+                </div>
+            )}
           </div>
 
           {/* Role Selection */}
