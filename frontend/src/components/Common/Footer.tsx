@@ -1,4 +1,4 @@
-import { Github, Linkedin, Twitter, Mail, Globe, Sparkles } from 'lucide-react';
+import { Github, Linkedin, Twitter, Globe, Sparkles } from 'lucide-react';
 
 interface FooterProps {
     onNavigate: (view: any) => void;

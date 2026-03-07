@@ -13,7 +13,7 @@ axios.interceptors.request.use((config) => {
     return config;
 });
 
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'https://prepx-e5cp.onrender.com/' || 'http://localhost:5000';
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'https://prepx-e5cp.onrender.com' || 'http://localhost:5000';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
