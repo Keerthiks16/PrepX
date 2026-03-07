@@ -8,8 +8,8 @@ const generateToken = (res, userId) => {
 
   res.cookie('jwt', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV !== 'development', // Use secure cookies in production
-    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production', // true for cross-site cookies
+    sameSite: 'none', // 'none' required for cross-domain
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 };
@@ -39,6 +39,14 @@ const registerUser = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      resumeContext: user.resumeContext,
+      skills: user.skills,
+      experienceLevel: user.experienceLevel,
+      projects: user.projects,
+      groqApiKey: user.groqApiKey,
+      linkedin: user.linkedin,
+      github: user.github,
+      portfolio: user.portfolio
     });
   } else {
     res.status(400);
@@ -60,6 +68,14 @@ const loginUser = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      resumeContext: user.resumeContext,
+      skills: user.skills,
+      experienceLevel: user.experienceLevel,
+      projects: user.projects,
+      groqApiKey: user.groqApiKey,
+      linkedin: user.linkedin,
+      github: user.github,
+      portfolio: user.portfolio
     });
   } else {
     res.status(401).json({ message: 'Invalid email or password' });
