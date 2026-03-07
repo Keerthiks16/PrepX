@@ -4,6 +4,7 @@ import interviewAnim from '../../assets/lottie/Interview..json';
 import resumeAnim from '../../assets/lottie/Document.json';
 import networkingAnim from '../../assets/lottie/Networking For All.json';
 import emailAnim from '../../assets/lottie/email.json';
+import gdAnim from '../../assets/lottie/GROUP DISCUSION.json';
 import { Sparkles, Brain, FileText, Send, Users } from 'lucide-react';
 
 interface HomeProps {
@@ -92,6 +93,18 @@ const Home = ({ onNavigate }: HomeProps) => {
             borderColor: 'border-emerald-500/20',
             buttonColor: 'bg-emerald-600 text-white',
             features: ['Proven Templates', 'Smart Personalization', 'Multi-platform support']
+        },
+        {
+            id: 'gd',
+            title: 'GD Preparation',
+            tagline: 'Dominate group discussions with AI personas.',
+            description: 'Practice multi-bot Group Discussions with diverse AI personas. Learn how to handle aggressive speakers, silent partners, and lead the conversation effectively with real-time feedback and evaluation.',
+            animation: gdAnim,
+            icon: Users,
+            color: 'from-cyan-500/10 to-accent/5',
+            borderColor: 'border-cyan-500/20',
+            buttonColor: 'bg-cyan-400 text-white',
+            features: ['Multi-Persona Bots', 'Custom Topics', 'Red Flag Detection']
         },
         {
             id: 'cover-letter',
@@ -209,7 +222,7 @@ const Home = ({ onNavigate }: HomeProps) => {
                             <p className="text-text-secondary text-sm">Cut down weeks of manual practice into days of focused AI sessions.</p>
                         </div>
                         <div className="space-y-2 border-x border-base-600/30 px-8">
-                            <div className="text-6xl font-black text-accent-200">95%</div>
+                            <div className="text-6xl font-black text-accent-200">75%</div>
                             <p className="text-lg font-medium text-text-primary uppercase tracking-tighter">ATS Compatibility</p>
                             <p className="text-text-secondary text-sm">Resumes designed to pass through the toughest recruiter screening tools.</p>
                         </div>

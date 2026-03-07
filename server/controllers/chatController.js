@@ -525,3 +525,117 @@ export const generateCoverLetter = async (req, res) => {
         res.status(500).json({ error: "Failed to generate cover letter" });
     }
 };
+
+// --- GROUP DISCUSSION (GD) FEATURES ---
+
+export const handleGDChat = async (req, res) => {
+    try {
+        const { topic, history, currentSpeaker } = req.body;
+
+        const personaPrompts = {
+            excellent: "You are an excellent GD participant. You are polite, efficient, use strong facts, and structure your viewpoints perfectly. You are a confirmed selection because of how efficiently you put across your points.",
+            aggressive: "You are an aggressive GD participant. You resonate all 'not to do' behaviors. You interrupt often, sound dominating, and might disregard others' opinions.",
+            neutral: "You are a neutral GD participant. You contribute moderately, have a 50-50 chance of selection, and provide standard viewpoints.",
+            silent: "You are a silent GD participant. You speak very little, provide minimal contribution, and are often less involved."
+        };
+
+        const systemPrompt = `You are ${currentSpeaker.name}, a participant in a Group Discussion.
+Topic: "${topic}"
+Your Role/Persona: ${personaPrompts[currentSpeaker.persona.toLowerCase()] || "Neutral participant"}
+
+INSTRUCTIONS:
+1. Stay strictly in character.
+2. Respond to the conversation so far.
+3. Keep your response concise (2-4 sentences).
+4. Do not act as a mediator. Speak as a fellow candidate.
+5. If someone just spoke, you can either agree, disagree or add a new dimension to the topic.`;
+
+        const messages = [
+            { role: 'system', content: systemPrompt },
+            ...(history || [])
+        ];
+
+        const client = getGroqClient();
+        const chatCompletion = await client.chat.completions.create({
+            messages: messages,
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.8,
+            max_tokens: 200,
+        });
+
+        const response = chatCompletion.choices[0]?.message?.content || "I agree with the point.";
+        res.json({ response });
+
+    } catch (error) {
+        console.error("GD Chat Error:", error);
+        res.status(500).json({ error: "Failed to generate GD response" });
+    }
+};
+
+export const generateGDFeedback = async (req, res) => {
+    try {
+        const { topic, history, userName } = req.body;
+
+        const systemPrompt = `You are an Expert GD Evaluator (Hiring Manager).
+Topic: "${topic}"
+User being evaluated: "${userName}"
+
+Evaluate the user's performance in this Group Discussion.
+
+OUTPUT FORMAT:
+Return ONLY a raw JSON object:
+{
+  "rating": <number 0-100>,
+  "summary": "<string, 2-3 sentences max>",
+  "speakerType": "excellent" | "neutral" | "aggressive" | "silent",
+  "suggestions": ["<string>", "<string>"],
+  "redFlags": ["<string>", "<string>"]
+}
+
+CRITERIA:
+- Evaluate content quality, teamwork, and communication.
+- Identify "red flags" (e.g., being too aggressive, too silent, or irrelevant points). If no red flags, return empty array.
+- "speakerType" should be based on how the user sounded during the GD.`;
+
+        const messages = [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `GD TRANSCRIPT:\n${JSON.stringify(history)}` }
+        ];
+
+        const client = getGroqClient();
+        const completion = await client.chat.completions.create({
+            messages: messages,
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.3,
+            response_format: { type: "json_object" }
+        });
+
+        res.json(JSON.parse(completion.choices[0]?.message?.content));
+
+    } catch (error) {
+        console.error("GD Feedback Error:", error);
+        res.status(500).json({ error: "Failed to generate GD feedback" });
+    }
+};
+
+export const generateGDMediatorIntro = async (req, res) => {
+    try {
+        const { topic } = req.body;
+        const systemPrompt = `You are a GD Mediator. Formally introduce the topic: "${topic}". 
+Announce that the discussion is now open and participants can begin. 
+Be professional and brief (max 2 sentences).`;
+
+        const client = getGroqClient();
+        const completion = await client.chat.completions.create({
+            messages: [{ role: 'user', content: systemPrompt }],
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.5,
+            max_tokens: 150
+        });
+
+        res.json({ response: completion.choices[0]?.message?.content });
+    } catch (error) {
+        console.error("GD Intro Error:", error);
+        res.status(500).json({ error: "Failed to generate mediator intro" });
+    }
+};

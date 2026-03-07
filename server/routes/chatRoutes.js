@@ -46,4 +46,11 @@ router.post('/cover-letter', (req, res, next) => {
     next();
 }, generateCoverLetter);
 
+// --- GROUP DISCUSSION (GD) ROUTES ---
+import { handleGDChat, generateGDFeedback, generateGDMediatorIntro } from '../controllers/chatController.js';
+
+router.post('/gd-chat', handleGDChat);
+router.post('/gd-feedback', generateGDFeedback);
+router.post('/gd-intro', generateGDMediatorIntro);
+
 export default router;

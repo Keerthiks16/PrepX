@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import axios from 'axios';
+
+// Existing Components
 import InterviewSetup, { type InterviewConfig } from './components/Interview/InterviewSetup';
 import InterviewSession from './components/Interview/InterviewSession';
 import FeedbackReport from './components/Interview/FeedbackReport';
@@ -15,15 +18,24 @@ import Networking from './components/Networking/Networking';
 import ResumeBuilder from './components/Tools/ResumeBuilder';
 import { useAuthStore } from './store/authStore';
 
+// GD Components
+import GDSetup, { type GDConfig } from './components/GD/GDSetup';
+import GDSession from './components/GD/GDSession';
+import GDReport from './components/GD/GDReport';
+
 const App = () => {
   // Auth State
   const { user, loading, checkAuth, logout } = useAuthStore();
   const [authView, setAuthView] = useState<'login' | 'register'>('login');
   
   // App State (Main Views)
-  const [currentView, setCurrentView] = useState<'home' | 'profile' | 'jobs' | 'networking' | 'resume' | 'cover-letter' | 'interview'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'profile' | 'jobs' | 'networking' | 'resume' | 'cover-letter' | 'interview' | 'gd'>('home');
   const [config, setConfig] = useState<InterviewConfig | null>(null);
   const [feedbackData, setFeedbackData] = useState<any>(null);
+
+  // GD State
+  const [gdConfig, setGdConfig] = useState<GDConfig | null>(null);
+  const [gdFeedback, setGdFeedback] = useState<any>(null);
 
   useEffect(() => {
     checkAuth();
@@ -36,6 +48,28 @@ const App = () => {
 
   const handleEndSession = (data: any) => {
     setFeedbackData(data);
+  };
+
+  const handleStartGD = (config: GDConfig) => {
+    setGdConfig(config);
+  };
+
+  const handleEndGDSession = async (transcript: any[]) => {
+    try {
+        const response = await axios.post('http://localhost:5000/api/chat/gd-feedback', {
+            topic: gdConfig?.topic,
+            history: transcript,
+            userName: user?.name || "Participant"
+        });
+        setGdFeedback(response.data);
+    } catch (error) {
+        console.error("GD Feedback Error:", error);
+    }
+  };
+
+  const handleRestartGD = () => {
+    setGdConfig(null);
+    setGdFeedback(null);
   };
 
   const handleStartCoaching = () => {
@@ -73,6 +107,7 @@ const App = () => {
 
   const navItems = [
     { id: 'interview',     label: 'Interview' },
+    { id: 'gd',            label: 'GD Preparation' },
     { id: 'jobs',          label: 'Jobs' },
     { id: 'resume',        label: 'Resume' },
     { id: 'cover-letter',  label: 'Cover Letter' },
@@ -87,7 +122,7 @@ const App = () => {
             <div className="w-full px-6 md:px-12 py-4 flex justify-between items-center">
                 <div 
                     className="text-2xl font-extrabold bg-gradient-to-r from-accent-300 to-accent-200 text-transparent bg-clip-text cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => { setCurrentView('home'); setConfig(null); setFeedbackData(null); }}
+                    onClick={() => { setCurrentView('home'); setConfig(null); setFeedbackData(null); setGdConfig(null); setGdFeedback(null); }}
                 >
                     <img src="/logo5.png" alt="Logo" className="h-20 w-auto" />
                 </div>
@@ -98,7 +133,7 @@ const App = () => {
                             return (
                                 <button 
                                     key={item.id}
-                                    onClick={() => { setCurrentView(item.id as any); setConfig(null); setFeedbackData(null); }}
+                                    onClick={() => { setCurrentView(item.id as any); setConfig(null); setFeedbackData(null); setGdConfig(null); setGdFeedback(null); }}
                                     className={`relative px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-300 z-10 ${
                                         isActive 
                                             ? 'text-base-900' 
@@ -119,7 +154,7 @@ const App = () => {
                     </div>
 
                     <button 
-                         onClick={() => { setCurrentView('profile'); setConfig(null); setFeedbackData(null); }}
+                         onClick={() => { setCurrentView('profile'); setConfig(null); setFeedbackData(null); setGdConfig(null); setGdFeedback(null); }}
                          className={`text-sm font-semibold tracking-wide transition-all ${currentView === 'profile' ? 'text-accent-200 border-b-2 border-accent' : 'text-text-secondary hover:text-text-primary'}`}
                     >
                         Profile
@@ -137,7 +172,7 @@ const App = () => {
         {/* Main Content */}
         <main className="">
             {currentView === 'home' ? (
-                <Home onNavigate={setCurrentView} />
+                <Home onNavigate={(v) => setCurrentView(v as any)} />
             ) : currentView === 'profile' ? (
                 <Profile />
             ) : currentView === 'jobs' ? (
@@ -148,6 +183,16 @@ const App = () => {
                 <Networking />
             ) : currentView === 'resume' ? (
                 <ResumeBuilder />
+            ) : currentView === 'gd' ? (
+                <>
+                    {!gdConfig && !gdFeedback ? (
+                        <GDSetup onStart={handleStartGD} />
+                    ) : gdFeedback ? (
+                        <GDReport data={gdFeedback} onRestart={handleRestartGD} />
+                    ) : (
+                        <GDSession config={gdConfig!} userName={user?.name || "Candidate"} onEndSession={handleEndGDSession} />
+                    )}
+                </>
             ) : currentView === 'interview' ? (
                  <>
                     {!config && !feedbackData ? (
@@ -165,7 +210,7 @@ const App = () => {
             ) : null}
         </main>
 
-        <Footer onNavigate={setCurrentView} />
+        <Footer onNavigate={(v) => setCurrentView(v as any)} />
     </div>
   );
 };
