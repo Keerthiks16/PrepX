@@ -91,7 +91,8 @@ const getUserProfile = async (req, res) => {
       resumeContext: user.resumeContext,
       skills: user.skills,
       experienceLevel: user.experienceLevel,
-      projects: user.projects
+      projects: user.projects,
+      groqApiKey: user.groqApiKey
     });
   } else {
     res.status(404).json({ message: 'User not found' });
@@ -117,6 +118,7 @@ export const updateProfile = async (req, res) => {
             user.linkedin = req.body.linkedin || user.linkedin;
             user.github = req.body.github || user.github;
             user.portfolio = req.body.portfolio || user.portfolio;
+            user.groqApiKey = req.body.groqApiKey !== undefined ? req.body.groqApiKey : user.groqApiKey;
 
             const updatedUser = await user.save();
             
@@ -131,7 +133,8 @@ export const updateProfile = async (req, res) => {
                 experienceLevel: updatedUser.experienceLevel,
                 linkedin: updatedUser.linkedin,
                 github: updatedUser.github,
-                portfolio: updatedUser.portfolio
+                portfolio: updatedUser.portfolio,
+                groqApiKey: updatedUser.groqApiKey
             });
         } else {
             res.status(404).json({ message: 'User not found' });

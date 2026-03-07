@@ -15,7 +15,8 @@ const Profile = () => {
                 name: user.name, email: user.email,
                 skills: user.skills || [], resumeContext: user.resumeContext || "",
                 experienceLevel: user.experienceLevel || "Entry",
-                projects: user.projects || []
+                projects: user.projects || [],
+                groqApiKey: user.groqApiKey || ""
             });
         }
     }, [user]);
@@ -122,6 +123,15 @@ const Profile = () => {
                             <option value="Mid">Mid Level</option>
                             <option value="Senior">Senior Level</option>
                         </select>
+                    </div>
+                    <div className="pt-4 border-t border-base-600/50">
+                        <label className="block text-sm text-text-secondary mb-1">Groq API Key <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" className="text-accent hover:underline text-xs ml-2" title="Get your free API key at console.groq.com">(Get your own key)</a></label>
+                        <input disabled={!isEditing} type="password" value={formData.groqApiKey || ""}
+                            onChange={(e) => setFormData({ ...formData, groqApiKey: e.target.value })}
+                            placeholder="gsk_..."
+                            className="w-full bg-base-900 border border-base-600 rounded-lg p-2 text-text-primary disabled:opacity-50 focus:ring-2 focus:ring-accent outline-none transition-all"
+                        />
+                        <p className="text-xs text-text-secondary mt-1">Provide your own key to bypass public rate limits for AI features.</p>
                     </div>
                 </div>
 

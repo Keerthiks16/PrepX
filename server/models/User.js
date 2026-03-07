@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema({
   skills: [{ type: String }],
   experienceLevel: { type: String, enum: ['Entry', 'Mid', 'Senior'], default: 'Entry' },
   projects: [projectSchema],
+  groqApiKey: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 

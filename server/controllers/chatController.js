@@ -3,13 +3,21 @@ import Groq from 'groq-sdk';
 // Initialize Groq lazily to ensure process.env is ready
 let groq;
 
-const getGroqClient = () => {
+const getGroqClient = (userApiKey = null) => {
+    if (userApiKey) {
+        return new Groq({ apiKey: userApiKey });
+    }
     if (!groq) {
         groq = new Groq({
             apiKey: process.env.GROQ_API_KEY
         });
     }
     return groq;
+};
+
+// Helper to extract user API key from request
+const extractApiKey = (req) => {
+    return req.headers['x-groq-api-key'] || req.body?.context?.groqApiKey || req.body?.groqApiKey || null;
 };
 
 // function to generate dynamic system prompt based on context
@@ -138,7 +146,7 @@ export const handleChat = async (req, res) => {
             { role: 'user', content: message }
         ];
 
-        const client = getGroqClient();
+        const client = getGroqClient(extractApiKey(req));
         const chatCompletion = await client.chat.completions.create({
             messages: messages,
             model: "llama-3.3-70b-versatile",
@@ -162,7 +170,7 @@ export const transcribeAudio = async (req, res) => {
             return res.status(400).json({ error: "No audio file provided" });
         }
 
-        const client = getGroqClient();
+        const client = getGroqClient(extractApiKey(req));
         
         // Convert Buffer to File object (Node 18+ global File)
         const file = new File([req.file.buffer], "audio.webm", { type: req.file.mimetype });
@@ -229,7 +237,7 @@ CRITERIA:
             { role: 'user', content: `TRANSCRIPT:\n${JSON.stringify(history)}` }
         ];
 
-        const client = getGroqClient();
+        const client = getGroqClient(extractApiKey(req));
         const completion = await client.chat.completions.create({
             messages: messages,
             model: "llama-3.3-70b-versatile",
@@ -268,7 +276,7 @@ Focus on:
 Resume Text:
 ${resumeText}`;
 
-        const client = getGroqClient();
+        const client = getGroqClient(extractApiKey(req));
         const completion = await client.chat.completions.create({
             messages: [{ role: 'user', content: systemPrompt }],
             model: "llama-3.3-70b-versatile",
@@ -327,7 +335,7 @@ INSTRUCTIONS:
 
 OUTPUT: Return ONLY the final compiled message text.`;
 
-        const client = getGroqClient();
+        const client = getGroqClient(extractApiKey(req));
         const completion = await client.chat.completions.create({
             messages: [{ role: 'user', content: systemPrompt }],
             model: "llama-3.3-70b-versatile",
@@ -446,7 +454,7 @@ OUTPUT RULES:
 7. Escape special LaTeX characters (e.g., $ becomes \\$, & becomes \\&, % becomes \\%).
 `;
 
-        const client = getGroqClient();
+        const client = getGroqClient(extractApiKey(req));
         const completion = await client.chat.completions.create({
             messages: [{ role: 'user', content: systemPrompt }],
             model: "llama-3.3-70b-versatile",
@@ -509,7 +517,7 @@ export const generateCoverLetter = async (req, res) => {
     OUTPUT:
     Return ONLY the raw text of the cover letter. Do not include markdown formatting or explanations.`;
 
-        const client = getGroqClient();
+        const client = getGroqClient(extractApiKey(req));
         const completion = await client.chat.completions.create({
             messages: [{ role: 'user', content: systemPrompt }],
             model: "llama-3.3-70b-versatile",
@@ -555,7 +563,7 @@ INSTRUCTIONS:
             ...(history || [])
         ];
 
-        const client = getGroqClient();
+        const client = getGroqClient(extractApiKey(req));
         const chatCompletion = await client.chat.completions.create({
             messages: messages,
             model: "llama-3.3-70b-versatile",
@@ -602,7 +610,7 @@ CRITERIA:
             { role: 'user', content: `GD TRANSCRIPT:\n${JSON.stringify(history)}` }
         ];
 
-        const client = getGroqClient();
+        const client = getGroqClient(extractApiKey(req));
         const completion = await client.chat.completions.create({
             messages: messages,
             model: "llama-3.3-70b-versatile",
@@ -625,7 +633,7 @@ export const generateGDMediatorIntro = async (req, res) => {
 Announce that the discussion is now open and participants can begin. 
 Be professional and brief (max 2 sentences).`;
 
-        const client = getGroqClient();
+        const client = getGroqClient(extractApiKey(req));
         const completion = await client.chat.completions.create({
             messages: [{ role: 'user', content: systemPrompt }],
             model: "llama-3.3-70b-versatile",

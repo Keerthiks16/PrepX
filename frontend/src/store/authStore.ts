@@ -12,6 +12,7 @@ export interface User {
   skills?: string[];
   experienceLevel?: string;
   currentRole?: string;
+  groqApiKey?: string;
   projects?: {
       title: string;
       description?: string;
