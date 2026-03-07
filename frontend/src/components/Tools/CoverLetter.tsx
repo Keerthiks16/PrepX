@@ -19,7 +19,7 @@ const CoverLetter = () => {
                 skills: user?.skills?.join(", "), resumeContext: user?.resumeContext,
                 projects: user?.projects
             };
-            const { data } = await axios.post('http://localhost:5000/api/chat/cover-letter', {
+            const { data } = await axios.post('/api/chat/cover-letter', {
                 userContext, jobDescription, company, manager, tone
             });
             setGeneratedLetter(data.coverLetter);

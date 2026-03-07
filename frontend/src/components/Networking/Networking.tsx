@@ -20,7 +20,7 @@ const Networking = () => {
                 college: "Thadomal Shahani Engineering College",
                 linkedin: user?.linkedin, portfolio: user?.portfolio, github: user?.github
             };
-            const { data } = await axios.post('http://localhost:5000/api/chat/networking-message', {
+            const { data } = await axios.post('/api/chat/networking-message', {
                 userContext, recipient, templateName: selectedTemplate,
                 templateText: NETWORKING_TEMPLATES[selectedTemplate], jobDescription
             });

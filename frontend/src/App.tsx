@@ -56,7 +56,7 @@ const App = () => {
 
   const handleEndGDSession = async (transcript: any[]) => {
     try {
-        const response = await axios.post('http://localhost:5000/api/chat/gd-feedback', {
+        const response = await axios.post('/api/chat/gd-feedback', {
             topic: gdConfig?.topic,
             history: transcript,
             userName: user?.name || "Participant"

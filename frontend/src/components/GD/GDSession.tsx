@@ -124,7 +124,7 @@ const GDSession = ({ config, userName, onEndSession }: GDSessionProps) => {
         try {
             const formData = new FormData();
             formData.append('audio', audioBlob, 'input.webm');
-            const transResponse = await axios.post('http://localhost:5000/api/chat/transcribe', formData, {
+            const transResponse = await axios.post('/api/chat/transcribe', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             const text = transResponse.data.text;
@@ -146,7 +146,7 @@ const GDSession = ({ config, userName, onEndSession }: GDSessionProps) => {
     const startSession = async () => {
         setIsSessionActive(true);
         try {
-            const response = await axios.post('http://localhost:5000/api/chat/gd-intro', { topic: config.topic });
+            const response = await axios.post('/api/chat/gd-intro', { topic: config.topic });
             const intro = response.data.response;
             const msg: GDMessage = { role: 'mediator', sender: 'Mediator', content: intro };
             
@@ -178,7 +178,7 @@ const GDSession = ({ config, userName, onEndSession }: GDSessionProps) => {
         const currentBot = config.participants[speakerIndexRef.current];
 
         try {
-            const response = await axios.post('http://localhost:5000/api/chat/gd-chat', {
+            const response = await axios.post('/api/chat/gd-chat', {
                 topic: config.topic,
                 history: transcriptRef.current.map(m => ({ 
                     role: m.role === 'user' ? 'user' : 'assistant', 

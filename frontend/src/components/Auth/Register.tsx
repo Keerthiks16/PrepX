@@ -20,7 +20,7 @@ const Register = ({ onSwitch, onSuccess }: RegisterProps) => {
 
     try {
       const { data } = await axios.post(
-        'http://localhost:5000/api/auth/register',
+        '/api/auth/register',
         { name, email, password },
         { withCredentials: true }
       );

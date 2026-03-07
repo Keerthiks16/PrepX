@@ -25,7 +25,7 @@ const JobBoard = () => {
 
     const fetchJobs = async () => {
         try {
-            const { data } = await axios.get('http://localhost:5000/api/jobs', { withCredentials: true });
+            const { data } = await axios.get('/api/jobs', { withCredentials: true });
             setJobs(data);
         } catch (error) {
             console.error("Failed to fetch jobs", error);
@@ -37,7 +37,7 @@ const JobBoard = () => {
     const handleAddJob = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const { data } = await axios.post('http://localhost:5000/api/jobs', {
+            const { data } = await axios.post('/api/jobs', {
                 company: newCompany, role: newRole, status: newStatus
             }, { withCredentials: true });
             setJobs([data, ...jobs]);
@@ -52,7 +52,7 @@ const JobBoard = () => {
         const updatedJobs = jobs.map(j => j._id === id ? { ...j, status: newStatus as any } : j);
         setJobs(updatedJobs);
         try {
-            await axios.put(`http://localhost:5000/api/jobs/${id}`, { status: newStatus }, { withCredentials: true });
+            await axios.put(`/api/jobs/${id}`, { status: newStatus }, { withCredentials: true });
         } catch (error) {
             console.error("Update failed", error);
             fetchJobs();
@@ -62,7 +62,7 @@ const JobBoard = () => {
     const deleteJob = async (id: string) => {
         if(!confirm("Are you sure you want to delete this job?")) return;
         try {
-            await axios.delete(`http://localhost:5000/api/jobs/${id}`, { withCredentials: true });
+            await axios.delete(`/api/jobs/${id}`, { withCredentials: true });
             setJobs(jobs.filter(j => j._id !== id));
         } catch (error) {
             console.error("Delete failed", error);

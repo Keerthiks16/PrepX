@@ -74,7 +74,7 @@ const InterviewSession = ({ config, onEndSession }: InterviewSessionProps) => {
       try {
           const formData = new FormData();
           formData.append('audio', audioBlob, 'input.webm');
-          const transResponse = await axios.post('http://localhost:5000/api/chat/transcribe', formData, {
+          const transResponse = await axios.post('/api/chat/transcribe', formData, {
               headers: { 'Content-Type': 'multipart/form-data' }
           });
           const text = transResponse.data.text;
@@ -110,7 +110,7 @@ const InterviewSession = ({ config, onEndSession }: InterviewSessionProps) => {
     setTranscript(prev => [...prev, newUserMsg]);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/chat', {
+      const response = await axios.post('/api/chat', {
         message: text,
         history: transcript,
         context: config 
@@ -138,7 +138,7 @@ const InterviewSession = ({ config, onEndSession }: InterviewSessionProps) => {
     setIsSpeaking(false);
     synthRef.current.cancel();
     try {
-        const response = await axios.post('http://localhost:5000/api/chat/feedback', {
+        const response = await axios.post('/api/chat/feedback', {
             history: transcript,
             context: config
         });

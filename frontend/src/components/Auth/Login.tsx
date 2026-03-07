@@ -19,7 +19,7 @@ const Login = ({ onSwitch, onSuccess }: LoginProps) => {
 
     try {
       const { data } = await axios.post(
-        'http://localhost:5000/api/auth/login',
+        '/api/auth/login',
         { email, password },
         { withCredentials: true }
       );

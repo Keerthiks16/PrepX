@@ -20,7 +20,7 @@ const ResumeBuilder = () => {
                 skills: user?.skills?.join(", "), resumeContext: user?.resumeContext,
                 projects: user?.projects, experience: user?.resumeContext
             };
-            const { data } = await axios.post('http://localhost:5000/api/chat/resume-latex', {
+            const { data } = await axios.post('/api/chat/resume-latex', {
                 userContext, jobDescription, mode, resumeContent: resumeText, targetRole
             });
             setGeneratedLatex(data.latexCode);

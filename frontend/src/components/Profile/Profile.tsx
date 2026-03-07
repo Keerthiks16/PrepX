@@ -23,7 +23,7 @@ const Profile = () => {
 
     const handleSave = async () => {
         try {
-            const { data } = await axios.put('http://localhost:5000/api/auth/profile', formData, { withCredentials: true });
+            const { data } = await axios.put('/api/auth/profile', formData, { withCredentials: true });
             login(data);
             setMsg("Profile Updated!");
             setIsEditing(false);
@@ -58,7 +58,7 @@ const Profile = () => {
     const handleGenerateSummary = async () => {
         setGenerating(true);
         try {
-            const { data } = await axios.post('http://localhost:5000/api/chat/resume-summary', { resumeText: rawResume });
+            const { data } = await axios.post('/api/chat/resume-summary', { resumeText: rawResume });
             setFormData({ ...formData, resumeContext: data.summary });
             setShowResumeModal(false);
             setRawResume("");

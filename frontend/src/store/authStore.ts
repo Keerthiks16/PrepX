@@ -38,7 +38,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     try {
-        await axios.post('http://localhost:5000/api/auth/logout', {}, { withCredentials: true });
+        await axios.post('/api/auth/logout', {}, { withCredentials: true });
         set({ user: null });
     } catch (error) {
         console.error("Logout failed", error);
@@ -48,7 +48,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   checkAuth: async () => {
     set({ loading: true });
     try {
-      const { data } = await axios.get('http://localhost:5000/api/auth/profile', {
+      const { data } = await axios.get('/api/auth/profile', {
         withCredentials: true 
       });
       set({ user: data, loading: false });
