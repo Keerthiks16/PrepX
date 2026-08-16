@@ -67,19 +67,28 @@ export const triggerJobSync = asyncHandler(async (req, res) => {
 
   if (now - lastSyncAt < SYNC_COOLDOWN_MS) {
     const waitSeconds = Math.ceil((SYNC_COOLDOWN_MS - (now - lastSyncAt)) / 1000);
-    res.status(429);
-    throw new Error(`Sync cooldown active. Try again in ${waitSeconds} seconds.`);
+    // Return a clean 429 – no thrown error, no stack-trace spam in the terminal
+    return res.status(429).json({
+      message: `Sync cooldown active. Try again in ${waitSeconds} seconds.`,
+      retryAfter: waitSeconds,
+    });
   }
 
   lastSyncAt = now;
 
-  const stats = await syncAll({
-    query: req.body?.query,
-    location: req.body?.location,
-    source: req.body?.source || 'all',
-  });
+  try {
+    const stats = await syncAll({
+      query: req.body?.query,
+      location: req.body?.location,
+      source: req.body?.source || 'all',
+    });
 
-  res.json({ message: 'Job sync completed', stats });
+    res.json({ message: 'Job sync completed', stats });
+  } catch (err) {
+    // Log the error properly but don't crash the server
+    console.error('[jobSync] syncAll failed:', err.message);
+    res.status(500).json({ message: 'Job sync failed', error: err.message });
+  }
 });
 
 // @desc    Save listing to user's application tracker
