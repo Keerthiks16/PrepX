@@ -1,59 +1,94 @@
-import puppeteer from 'puppeteer';
+import axios from 'axios';
+import * as cheerio from 'cheerio';
 import { FetchError } from '../utils/fetchError.js';
 import { truncateSummary } from '../services/jobNormalizer.js';
 
-// ─── Config ────────────────────────────────────────────────────────────────────
-
 const BASE_URL = 'https://www.naukri.com';
-const DELAY_MS = 2000;
-const RESULTS_PER_PAGE = 20;
-const PAGE_TIMEOUT = 30000;
+const DELAY_MS = 1500;
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
+const HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.5',
+  'Accept-Encoding': 'gzip, deflate, br',
+  'Connection': 'keep-alive',
+  'Cache-Control': 'max-age=0'
+};
 
-export const isNaukriEnabled = () =>
-  process.env.NAUKRI_ENABLED === 'true';
+export const isNaukriEnabled = () => process.env.NAUKRI_ENABLED === 'true';
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Build Naukri job search URL.
- * Pattern: /keyword-jobs  or  /keyword-jobs-in-location  (page 2+ appended as -2, -3...)
+ * Format the query and location into a Naukri slug URL.
+ * e.g. /react-developer-jobs-in-bangalore or /react-developer-jobs
  */
 const buildUrl = (query, location, page) => {
-  const slug = query.toLowerCase().replace(/\s+/g, '-');
-  const locSlug = location
-    ? `-in-${location.toLowerCase().replace(/\s+/g, '-')}`
-    : '';
-  const pagePart = page > 1 ? `-${page}` : '';
-  return `${BASE_URL}/${slug}-jobs${locSlug}${pagePart}`;
+  const q = encodeURIComponent(query.toLowerCase().replace(/\s+/g, '-'));
+  const loc = location ? `-in-${encodeURIComponent(location.toLowerCase().replace(/\s+/g, '-'))}` : '';
+  const pageSuffix = page > 1 ? `-${page}` : '';
+  return `${BASE_URL}/${q}-jobs${loc}${pageSuffix}`;
 };
 
-const extractExternalId = (jobId, href = '') => {
-  if (jobId) return String(jobId);
-  const match = href.match(/-(\d{7,})$/);
-  return match ? match[1] : href.replace(/[^a-z0-9]/gi, '-').slice(-40);
-};
+/**
+ * Parses Next.js RSC payload stream fragments from script blocks and extracts the srpState search response.
+ */
+const extractSearchResponse = (html) => {
+  const $ = cheerio.load(html);
+  let nextPayload = '';
 
-// ─── Normaliser ───────────────────────────────────────────────────────────────
+  $('script:not([src])').each((_, el) => {
+    const content = $(el).html() || '';
+    if (content.includes('self.__next_f.push')) {
+      nextPayload += content;
+    }
+  });
+
+  if (!nextPayload) return null;
+
+  // Unescape strings and search for srpState/searchResp JSON
+  // Next.js serializes data by escaping quote marks. Let's do a regex search for the searchResp block.
+  const searchRespRegex = /"searchResp"\s*:\s*(\{.+?\})(?=\s*,\s*"fatFooter")/s;
+  
+  // Also try a broader regex if the response is inline or formatted slightly differently
+  const unescaped = nextPayload.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+  const match = unescaped.match(searchRespRegex);
+  
+  if (match) {
+    try {
+      return JSON.parse(match[1]);
+    } catch (e) {
+      console.warn('[naukri] Failed to parse searchResp JSON regex match:', e.message);
+    }
+  }
+
+  // Fallback: Regex for job details arrays or direct patterns if searchResp structure changed
+  const jobDetailsRegex = /"jobDetails"\s*:\s*(\[.+?\])\s*,\s*"fatFooter"/s;
+  const matchDetails = unescaped.match(jobDetailsRegex);
+  if (matchDetails) {
+    try {
+      return { jobDetails: JSON.parse(matchDetails[1]) };
+    } catch (e) {
+      console.warn('[naukri] Failed to parse jobDetails JSON fallback match:', e.message);
+    }
+  }
+
+  return null;
+};
 
 const normalizeNaukriJob = (raw) => {
-  const applyUrl = raw.href?.startsWith('http')
-    ? raw.href
-    : raw.href
-      ? `${BASE_URL}${raw.href}`
-      : '';
+  const externalId = String(raw.jobId);
+  const applyUrl = raw.jdURL?.startsWith('http') ? raw.jdURL : `${BASE_URL}${raw.jdURL || ''}`;
+  const fullDescription = raw.jobDescription || '';
 
-  const externalId = extractExternalId(raw.jobId, raw.href);
+  const location = raw.placeholders?.find(p => p.type === 'location')?.label || '';
+  const salary = raw.placeholders?.find(p => p.type === 'salary')?.label || '';
+  const experience = raw.placeholders?.find(p => p.type === 'experience')?.label || '';
 
-  const fullDescription = raw.skills?.length
-    ? `${raw.summary}\n\nSkills: ${raw.skills.join(', ')}`
-    : raw.summary || '';
-
-  // Parse posted date strings like "2 days ago", "3 weeks ago", "Posted today"
+  // Determine posted date
   let postedAt;
-  const p = (raw.postedRaw || '').toLowerCase();
-  if (p.includes('today') || p.includes('just') || p.includes('hour')) {
+  const p = raw.footerPlaceholderLabel?.toLowerCase() || ''; // e.g. "Just now", "2 days ago", "15 days ago"
+  if (p.includes('today') || p.includes('just') || p.includes('now')) {
     postedAt = new Date();
   } else {
     const numMatch = p.match(/(\d+)\s*(day|week|month)/);
@@ -65,183 +100,82 @@ const normalizeNaukriJob = (raw) => {
         unit === 'week' ? n * 7 * 86400000 :
         n * 30 * 86400000;
       postedAt = new Date(Date.now() - ms);
-    } else if (raw.postedRaw) {
-      const parsed = Date.parse(raw.postedRaw);
-      if (!isNaN(parsed)) postedAt = new Date(parsed);
     }
   }
+
+  const descWithSkills = raw.tagsAndSkills
+    ? `${fullDescription}\n\nSkills: ${raw.tagsAndSkills}`
+    : fullDescription;
 
   return {
     externalId,
     source: 'naukri',
-    title: raw.title,
-    company: raw.company || 'Unknown',
-    location: raw.location || '',
-    fullDescription,
-    summary: truncateSummary(fullDescription, 300),
+    title: raw.title?.trim() || '',
+    company: raw.companyName?.trim() || 'Unknown',
+    location: location.trim(),
+    fullDescription: descWithSkills.trim(),
+    summary: truncateSummary(descWithSkills, 300),
     applyUrl,
     postedAt,
-    salary: raw.salary || '',
-    employmentType: 'Full-time',
+    salary: salary.trim(),
+    employmentType: experience ? `${experience} Exp` : '',
     isActive: true,
     scrapedAt: new Date(),
   };
 };
 
-// ─── Page Scraper with Puppeteer ──────────────────────────────────────────────
-
-const scrapePage = async (page, url) => {
-  console.log(`[naukri] Navigating to: ${url}`);
-
-  await page.goto(url, { waitUntil: 'networkidle2', timeout: PAGE_TIMEOUT });
-
-  // Wait for job cards — confirmed selector from real DOM analysis
-  try {
-    await page.waitForSelector('[data-job-id], .srp-jobtuple-wrapper', { timeout: 15000 });
-  } catch {
-    console.warn('[naukri] No job card selector found — page may be empty or blocked');
-    return [];
-  }
-
-  // Dismiss cookie/login popups if present
-  await page.evaluate(() => {
-    document.querySelectorAll('[class*="overlay"], [class*="modal"], [class*="popup"]').forEach(el => el.remove());
-  });
-
-  // Extract jobs from DOM
-  const jobs = await page.evaluate(() => {
-    const results = [];
-
-    // [data-job-id] confirmed to find 20 cards from real DOM inspection
-    const cards = document.querySelectorAll('[data-job-id]');
-
-    cards.forEach((card) => {
-      try {
-        // Job ID from data attribute
-        const jobId = card.getAttribute('data-job-id') || '';
-
-        // Title & URL — Naukri uses a.title inside the card
-        const titleEl = card.querySelector('a.title');
-        const title = titleEl?.getAttribute('title') || titleEl?.innerText?.trim() || '';
-        const href = titleEl?.getAttribute('href') || '';
-
-        if (!title || !href) return;
-
-        // Company
-        const company = card.querySelector('a.comp-name')?.innerText?.trim() ||
-          card.querySelector('[class*="comp-name"]')?.innerText?.trim() || '';
-
-        // Location — inside .location span or locWdth
-        const location = card.querySelector('span.locWdth')?.innerText?.trim() ||
-          card.querySelector('.location span')?.innerText?.trim() ||
-          card.querySelector('[class*="location"]')?.innerText?.trim() || '';
-
-        // Experience
-        const experience = card.querySelector('span.expwdth')?.innerText?.trim() ||
-          card.querySelector('[class*="experience"]')?.innerText?.trim() || '';
-
-        // Salary
-        const salary = card.querySelector('span.salWdth')?.innerText?.trim() ||
-          card.querySelector('[class*="salary"]')?.innerText?.trim() || '';
-
-        // Summary / Description
-        const summary = card.querySelector('.job-desc, [class*="job-desc"]')?.innerText?.trim() || '';
-
-        // Posted date
-        const postedRaw = card.querySelector('[class*="posted"], time')?.innerText?.trim() || '';
-
-        // Skills / Tags — ul.tags-gt > li
-        const skills = [];
-        card.querySelectorAll('ul.tags-gt li').forEach((sk) => {
-          const text = sk.innerText?.trim();
-          if (text && text.length < 50) skills.push(text);
-        });
-
-        results.push({ title, company, location, experience, salary, summary, postedRaw, skills, href, jobId });
-      } catch {
-        // skip individual card errors
-      }
-    });
-
-    return results;
-  });
-
-  return jobs;
-};
-
-// ─── Main Export ──────────────────────────────────────────────────────────────
-
 /**
- * Fetch Naukri job listings using a headless browser (Puppeteer).
- *
- * @param {object} options
- * @param {string} options.query      - Job keyword(s), e.g. "react developer"
- * @param {string} [options.location] - City/region, e.g. "bangalore"
- * @param {number} [options.pages=2]  - Number of result pages to scrape
+ * Fetch Naukri jobs for query/location.
  */
-export async function fetchJobs({ query, location, pages = 2 }) {
+export async function fetchJobs({ query, location, pages = 1 }) {
   if (!isNaukriEnabled()) {
     console.warn('[naukri] Skipped: NAUKRI_ENABLED != true');
     return [];
   }
 
-  const maxPages = parseInt(process.env.NAUKRI_PAGES || pages, 10);
   const results = [];
 
-  let browser;
-  try {
-    browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--disable-features=IsolateOrigins,site-per-process',
-      ],
-    });
+  for (let page = 1; page <= pages; page++) {
+    const url = buildUrl(query, location, page);
+    console.log(`[naukri] Fetching page ${page}: ${url}`);
 
-    const page = await browser.newPage();
+    try {
+      const { data, status } = await axios.get(url, {
+        headers: HEADERS,
+        timeout: 15000,
+      });
 
-    // Set realistic browser headers
-    await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
-    );
-    await page.setExtraHTTPHeaders({
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    });
+      if (status !== 200) {
+        throw new FetchError(`HTTP ${status}`, status);
+      }
 
-
-
-    for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
-      const url = buildUrl(query, location, pageNum);
-
-      let rawJobs;
-      try {
-        rawJobs = await scrapePage(page, url);
-      } catch (err) {
-        console.error(`[naukri] Error on page ${pageNum}:`, err.message);
+      const searchResp = extractSearchResponse(data);
+      if (!searchResp || !searchResp.jobDetails) {
+        console.warn(`[naukri] Could not extract search response on page ${page}`);
         break;
       }
 
-      console.log(`[naukri] Page ${pageNum} → ${rawJobs.length} listings`);
+      const rawJobs = searchResp.jobDetails;
+      console.log(`[naukri] Page ${page} → ${rawJobs.length} listings`);
 
       if (rawJobs.length === 0) break;
 
       for (const raw of rawJobs) {
         const normalized = normalizeNaukriJob(raw);
-        if (normalized.externalId && normalized.title && normalized.applyUrl) {
+        if (normalized.externalId && normalized.title && normalized.company) {
           results.push(normalized);
         }
       }
 
-      if (pageNum < maxPages) await sleep(DELAY_MS);
+    } catch (err) {
+      if (err instanceof FetchError) throw err;
+      throw new FetchError(
+        `[naukri] Request failed on page ${page}: ${err.message}`,
+        err.response?.status || 500
+      );
     }
-  } catch (err) {
-    throw new FetchError(`[naukri] Browser scrape failed: ${err.message}`, 500);
-  } finally {
-    if (browser) await browser.close();
+
+    if (page < pages) await sleep(DELAY_MS);
   }
 
   console.log(`[naukri] Total fetched: ${results.length} jobs`);

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { useAuthStore } from '../../store/authStore';
-import { Mail, Lock, Eye, EyeOff, Sparkles, ArrowRight, Loader2, ShieldCheck, Cpu } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Sparkles, ArrowRight, Loader2, Cpu } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface LoginProps {

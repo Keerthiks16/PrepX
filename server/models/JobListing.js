@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const jobListingSchema = new mongoose.Schema(
   {
     externalId: { type: String, required: true },
-    source: { type: String, enum: ['jsearch', 'adzuna', 'internshala'], required: true },
+    source: { type: String, enum: ['jsearch', 'adzuna', 'internshala', 'naukri'], required: true },
     title: { type: String, required: true },
     company: { type: String, required: true },
     location: { type: String, default: '' },
