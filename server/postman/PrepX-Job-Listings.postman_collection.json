@@ -1,0 +1,280 @@
+{
+  "info": {
+    "_postman_id": "prepx-job-listings-collection",
+    "name": "PrepX - Job Listings API",
+    "description": "Test PrepX job discovery endpoints (JSearch + Adzuna ingestion).\n\n**Setup**\n1. Start server: `cd server && npm run dev`\n2. Run **Login** first (Postman stores the `jwt` cookie automatically).\n3. Ensure Postman **Settings → Cookies** is enabled.\n4. Set `baseUrl` if not using localhost:5000.\n5. Run **Get Job Listings** — it auto-saves the first listing `_id` into `jobListingId`.\n\n**Note:** All `/api/job-listings` routes require authentication.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "email",
+      "value": "your@email.com"
+    },
+    {
+      "key": "password",
+      "value": "yourpassword"
+    },
+    {
+      "key": "jobListingId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json._id) {",
+                  "    pm.collectionVariables.set('userId', json._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Logs in and sets the `jwt` httpOnly cookie used by all protected routes."
+          },
+          "response": []
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Register a new user. Also sets the `jwt` cookie on success."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "profile"]
+            },
+            "description": "Verify your session cookie is working."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Job Listings",
+      "item": [
+        {
+          "name": "Get Job Listings",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.listings && json.listings.length > 0) {",
+                  "    pm.collectionVariables.set('jobListingId', json.listings[0]._id);",
+                  "    console.log('Saved jobListingId:', json.listings[0]._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/job-listings?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "job-listings"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Paginated feed of synced jobs. Auto-saves first listing ID to `jobListingId`."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Job Listings (search + filters)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/job-listings?q=react&location=Bangalore&source=adzuna&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "job-listings"],
+              "query": [
+                { "key": "q", "value": "react", "description": "Text search on title/company/summary" },
+                { "key": "location", "value": "Bangalore", "description": "Case-insensitive location filter" },
+                { "key": "source", "value": "adzuna", "description": "jsearch | adzuna" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Filter by keyword, location, and source."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Job Listing by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/job-listings/{{jobListingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "job-listings", "{{jobListingId}}"]
+            },
+            "description": "Get a single listing. Run **Get Job Listings** first to populate `jobListingId`."
+          },
+          "response": []
+        },
+        {
+          "name": "Trigger Job Sync (all sources)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"react developer\",\n  \"location\": \"India\",\n  \"source\": \"all\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/job-listings/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "job-listings", "sync"]
+            },
+            "description": "Manually fetch jobs from enabled APIs and upsert into MongoDB.\n\n**Cooldown:** 1 request per 5 minutes per server instance.\n\nBody fields (all optional):\n- `query` — override search keyword\n- `location` — override location\n- `source` — `all` | `jsearch` | `adzuna`"
+          },
+          "response": []
+        },
+        {
+          "name": "Trigger Job Sync (Adzuna only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"software engineer\",\n  \"location\": \"India\",\n  \"source\": \"adzuna\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/job-listings/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "job-listings", "sync"]
+            },
+            "description": "Sync from Adzuna only — useful while JSearch is not subscribed."
+          },
+          "response": []
+        },
+        {
+          "name": "Save Listing to Tracker",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/job-listings/{{jobListingId}}/save",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "job-listings", "{{jobListingId}}", "save"]
+            },
+            "description": "Copies a job listing into the user's personal Kanban tracker (`/api/jobs`).\n\nRun **Get Job Listings** first to set `jobListingId`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Job Tracker (verify save)",
+      "item": [
+        {
+          "name": "Get My Tracked Jobs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs"]
+            },
+            "description": "Returns the user's Kanban tracker jobs. Use after **Save Listing to Tracker** to confirm it worked."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

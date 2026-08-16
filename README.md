@@ -33,6 +33,7 @@ PrepX is a comprehensive career preparation platform built with the MERN stack (
 - JWT (JSON Web Tokens)
 - Multer (File Handling)
 - bcryptjs (Password Hashing)
+- node-cron (Scheduled job sync)
 
 ## Prerequisites
 
@@ -69,6 +70,38 @@ Create a `.env` file in the `server` directory and configure the necessary envir
 - JWT_SECRET=your_jwt_secret
 - GROQ_API_KEY=your_groq_api_key (can also be configured via user profile)
 - FRONTEND_URL=your_frontend_url (for CORS)
+
+**Job listing ingestion (JSearch + Adzuna):**
+
+- RAPIDAPI_KEY=your_rapidapi_key
+- JSEARCH_ENABLED=true
+- JSEARCH_COUNTRY=in
+- ADZUNA_APP_ID=your_adzuna_app_id
+- ADZUNA_APP_KEY=your_adzuna_app_key
+- ADZUNA_COUNTRY=in
+- ADZUNA_ENABLED=true
+- JOB_SYNC_ENABLED=true
+- JOB_SYNC_QUERIES=software engineer,react developer,mern developer,data analyst
+- JOB_SYNC_LOCATION=India
+- JOB_SYNC_CRON=0 */6 * * *
+
+Obtain API keys from [RapidAPI JSearch](https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch) and [Adzuna Developer Portal](https://developer.adzuna.com/).
+
+Run a manual sync:
+
+```bash
+cd server
+npm run sync-jobs
+npm run sync-jobs -- --query="react developer" --location="Bangalore"
+npm run sync-jobs -- --source=jsearch
+```
+
+Job listing API (authenticated):
+
+- GET /api/job-listings — paginated feed (`?q=`, `?location=`, `?source=`, `?page=`, `?limit=`)
+- GET /api/job-listings/:id — single listing
+- POST /api/job-listings/sync — trigger manual sync (5-minute cooldown)
+- POST /api/job-listings/:id/save — save listing to personal job tracker
 
 ### Frontend (frontend/.env)
 

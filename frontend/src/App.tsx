@@ -14,6 +14,7 @@ import Loader from './components/Common/Loader';
 import Footer from './components/Common/Footer';
 import Home from './components/Dashboard/Home';
 import JobBoard from './components/Dashboard/JobBoard';
+import JobListings from './components/Dashboard/JobListings';
 import Networking from './components/Networking/Networking';
 import ResumeBuilder from './components/Tools/ResumeBuilder';
 import { useAuthStore } from './store/authStore';
@@ -29,7 +30,7 @@ const App = () => {
   const [authView, setAuthView] = useState<'login' | 'register'>('login');
   
   // App State (Main Views)
-  const [currentView, setCurrentView] = useState<'home' | 'profile' | 'jobs' | 'networking' | 'resume' | 'cover-letter' | 'interview' | 'gd'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'profile' | 'jobs' | 'job-listings' | 'networking' | 'resume' | 'cover-letter' | 'interview' | 'gd'>('home');
   const [config, setConfig] = useState<InterviewConfig | null>(null);
   const [feedbackData, setFeedbackData] = useState<any>(null);
 
@@ -108,7 +109,8 @@ const App = () => {
   const navItems = [
     { id: 'interview',     label: 'Interview' },
     { id: 'gd',            label: 'GD Preparation' },
-    { id: 'jobs',          label: 'Jobs' },
+    { id: 'job-listings',  label: 'Discover Jobs' },
+    { id: 'jobs',          label: 'Tracker' },
     { id: 'resume',        label: 'Resume' },
     { id: 'cover-letter',  label: 'Cover Letter' },
     { id: 'networking',    label: 'Networking' },
@@ -175,6 +177,8 @@ const App = () => {
                 <Home onNavigate={(v) => setCurrentView(v as any)} />
             ) : currentView === 'profile' ? (
                 <Profile />
+            ) : currentView === 'job-listings' ? (
+                <JobListings />
             ) : currentView === 'jobs' ? (
                 <JobBoard />
             ): currentView === 'cover-letter' ? (

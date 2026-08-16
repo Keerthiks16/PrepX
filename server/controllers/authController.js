@@ -6,10 +6,12 @@ const generateToken = (res, userId) => {
     expiresIn: '30d',
   });
 
+  const isProduction = process.env.NODE_ENV === 'production';
+
   res.cookie('jwt', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // true for cross-site cookies
-    sameSite: 'none', // 'none' required for cross-domain
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax', // 'none' needs Secure=true; use 'lax' for localhost dev
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 };

@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "sync-jobs": "node scripts/syncJobs.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -13,7 +14,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "axios": "^1.19.0",
     "bcryptjs": "^3.0.3",
+    "cheerio": "^1.2.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.2.4",
@@ -22,9 +25,14 @@
     "groq-sdk": "^0.37.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.6",
-    "multer": "^2.0.2"
+    "multer": "^2.0.2",
+    "node-cron": "^4.6.0",
+    "puppeteer": "^25.7.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
+  },
+  "allowScripts": {
+    "puppeteer@25.7.0": true
   }
 }

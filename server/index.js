@@ -7,6 +7,8 @@ import cookieParser from "cookie-parser";
 import chatRoutes from "./routes/chatRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
+import jobListingRoutes from "./routes/jobListingRoutes.js";
+import { startJobSyncCron } from "./jobs/cronSyncJobs.js";
 
 dotenv.config();
 
@@ -26,13 +28,17 @@ app.use(cookieParser());
 // Database Connection
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
+  .then(() => {
+    console.log("MongoDB Connected");
+    startJobSyncCron();
+  })
   .catch((err) => console.error("MongoDB Connection Error:", err));
 
 // Routes
 app.use("/api/chat", chatRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
+app.use("/api/job-listings", jobListingRoutes);
 
 app.get("/", (req, res) => {
   res.send("AI Interviewer Server is Running");
