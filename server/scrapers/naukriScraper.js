@@ -42,44 +42,50 @@ const buildUrl = (query, location, page) => {
  */
 const extractSearchResponse = (html) => {
   const $ = cheerio.load(html);
-  let nextPayload = '';
 
+  // 1️⃣ Try original self.__next_f.push payload (used locally)
+  let nextPayload = '';
   $('script:not([src])').each((_, el) => {
     const content = $(el).html() || '';
     if (content.includes('self.__next_f.push')) {
       nextPayload += content;
     }
   });
-
-  if (!nextPayload) return null;
-
-  // Unescape strings and search for srpState/searchResp JSON
-  // Next.js serializes data by escaping quote marks. Let's do a regex search for the searchResp block.
-  const searchRespRegex = /"searchResp"\s*:\s*(\{.+?\})(?=\s*,\s*"fatFooter")/s;
-  
-  // Also try a broader regex if the response is inline or formatted slightly differently
-  const unescaped = nextPayload.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
-  const match = unescaped.match(searchRespRegex);
-  
-  if (match) {
-    try {
-      return JSON.parse(match[1]);
-    } catch (e) {
-      console.warn('[naukri] Failed to parse searchResp JSON regex match:', e.message);
+  if (nextPayload) {
+    const unescaped = nextPayload.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+    const searchRespRegex = /"searchResp"\s*:\s*(\{.+?\})(?=\s*,\s*"fatFooter")/s;
+    const match = unescaped.match(searchRespRegex);
+    if (match) {
+      try {
+        return JSON.parse(match[1]);
+      } catch (e) {
+        console.warn('[naukri] Failed to parse searchResp JSON (self payload):', e.message);
+      }
     }
   }
 
-  // Fallback: Regex for job details arrays or direct patterns if searchResp structure changed
-  const jobDetailsRegex = /"jobDetails"\s*:\s*(\[.+?\])\s*,\s*"fatFooter"/s;
-  const matchDetails = unescaped.match(jobDetailsRegex);
-  if (matchDetails) {
+  // 2️⃣ Fallback: look for Next.js __NEXT_DATA__ script tag
+  const nextDataScript = $('#__NEXT_DATA__').html();
+  if (nextDataScript) {
     try {
-      return { jobDetails: JSON.parse(matchDetails[1]) };
+      const parsed = JSON.parse(nextDataScript);
+      // The shape may vary; common path is props.pageProps.searchResp
+      const resp = parsed?.props?.pageProps?.searchResp;
+      if (resp) return resp;
     } catch (e) {
-      console.warn('[naukri] Failed to parse jobDetails JSON fallback match:', e.message);
+      console.warn('[naukri] Failed to parse __NEXT_DATA__ JSON:', e.message);
     }
   }
 
+  // 3️⃣ Last resort: directly scrape job cards using the selector we wait for
+  const cards = $('[data-job-id]');
+  if (cards.length) {
+    // Build a minimal structure compatible with the rest of the pipeline
+    const jobDetails = cards.map((_, el) => $(el).data()).get();
+    return { jobDetails };
+  }
+
+  // If none of the above worked, return null so the caller can log a warning
   return null;
 };
 
@@ -144,55 +150,6 @@ export async function fetchJobs({ query, location, pages = 1 }) {
 
   // Iterate over pages
   for (let page = 1; page <= pages; page++) {
-    const url = buildUrl(query, location, page);
-    console.info('[naukri-debug] Fetching page', page, 'URL:', url);
-
-    try {
-      // Launch browser (production uses sparticuz chromium)
-      const browser = await launchBrowser();
-      const puppeteerPage = await browser.newPage();
-      console.info('[naukri-debug] Browser launched, navigating...');
-      await puppeteerPage.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-
-      // Wait for job cards to appear – use the selector we discovered
-      await puppeteerPage.waitForSelector('[data-job-id]', { timeout: 15000 }).catch(() => {
-        console.warn('[naukri-debug] Selector [data-job-id] not found within timeout');
-      });
-
-      const html = await puppeteerPage.content();
-      console.info('[naukri-debug] HTML snippet (first 300 chars):', html.slice(0, 300).replace(/\n/g, ''));
-
-      // Save a screenshot for remote debugging (Render keeps /tmp for the life of the process)
-      const screenshotPath = `/tmp/naukri_page_${page}.png`;
-      await puppeteerPage.screenshot({ path: screenshotPath, fullPage: true });
-      console.info('[naukri-debug] Screenshot saved to', screenshotPath);
-
-      // Extract jobs from the page content using the existing extractSearchResponse function
-      const searchResp = extractSearchResponse(html);
-      if (!searchResp || !searchResp.jobDetails) {
-        console.warn(`[naukri-debug] No jobDetails extracted on page ${page}`);
-        await browser.close();
-        break;
-      }
-
-      const rawJobs = searchResp.jobDetails;
-      console.info(`[naukri-debug] Page ${page} → ${rawJobs.length} raw job entries`);
-
-      for (const raw of rawJobs) {
-        const normalized = normalizeNaukriJob(raw);
-        if (normalized.externalId && normalized.title && normalized.company) {
-          results.push(normalized);
-        }
-      }
-
-      await browser.close();
-    } catch (err) {
-      console.error(`[naukri-debug] Error on page ${page}:`, err);
-      throw err;
-    }
-
-    if (page < pages) await sleep(DELAY_MS);
-  }    for (let page = 1; page <= pages; page++) {
     const url = buildUrl(query, location, page);
     console.info('[naukri-debug] Fetching page', page, 'URL:', url);
 

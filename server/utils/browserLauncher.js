@@ -11,22 +11,25 @@
 const isProduction = process.env.NODE_ENV === 'production';
 
 export async function launchBrowser() {
+  // Load puppeteer‑extra and the stealth plugin (both work with puppeteer‑core or normal puppeteer)
+  const puppeteerExtra = (await import('puppeteer-extra')).default;
+  const StealthPlugin = (await import('puppeteer-extra-plugin-stealth')).default;
+  puppeteerExtra.use(StealthPlugin());
+
   if (isProduction) {
-    // Cloud deployment — use sparticuz chromium
+    // Cloud deployment – use sparticuz Chromium (lightweight) via puppeteer‑core
     const chromium = (await import('@sparticuz/chromium')).default;
     const puppeteerCore = (await import('puppeteer-core')).default;
-
-    return puppeteerCore.launch({
+    return puppeteerExtra.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
       headless: chromium.headless,
     });
   } else {
-    // Local development — use bundled puppeteer + its Chromium
+    // Local development – use bundled puppeteer (full Chromium)
     const puppeteer = (await import('puppeteer')).default;
-
-    return puppeteer.launch({
+    return puppeteerExtra.launch({
       headless: true,
       args: [
         '--no-sandbox',
