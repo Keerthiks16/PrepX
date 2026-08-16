@@ -1,6 +1,7 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { FetchError } from '../utils/fetchError.js';
+import { launchBrowser } from '../utils/browserLauncher.js';
 import { truncateSummary } from '../services/jobNormalizer.js';
 
 const BASE_URL = 'https://www.naukri.com';
@@ -16,6 +17,12 @@ const HEADERS = {
 };
 
 export const isNaukriEnabled = () => process.env.NAUKRI_ENABLED === 'true';
+
+// Debug helper – prints env and launch info
+const logEnvAndLaunch = async () => {
+  console.info('[naukri-debug] NAUKRI_ENABLED =', process.env.NAUKRI_ENABLED);
+  console.info('[naukri-debug] NODE_ENV =', process.env.NODE_ENV);
+};
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -135,30 +142,41 @@ export async function fetchJobs({ query, location, pages = 1 }) {
 
   const results = [];
 
+  // Iterate over pages
   for (let page = 1; page <= pages; page++) {
     const url = buildUrl(query, location, page);
-    console.log(`[naukri] Fetching page ${page}: ${url}`);
+    console.info('[naukri-debug] Fetching page', page, 'URL:', url);
 
     try {
-      const { data, status } = await axios.get(url, {
-        headers: HEADERS,
-        timeout: 15000,
+      // Launch browser (production uses sparticuz chromium)
+      const browser = await launchBrowser();
+      const puppeteerPage = await browser.newPage();
+      console.info('[naukri-debug] Browser launched, navigating...');
+      await puppeteerPage.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+
+      // Wait for job cards to appear – use the selector we discovered
+      await puppeteerPage.waitForSelector('[data-job-id]', { timeout: 15000 }).catch(() => {
+        console.warn('[naukri-debug] Selector [data-job-id] not found within timeout');
       });
 
-      if (status !== 200) {
-        throw new FetchError(`HTTP ${status}`, status);
-      }
+      const html = await puppeteerPage.content();
+      console.info('[naukri-debug] HTML snippet (first 300 chars):', html.slice(0, 300).replace(/\n/g, ''));
 
-      const searchResp = extractSearchResponse(data);
+      // Save a screenshot for remote debugging (Render keeps /tmp for the life of the process)
+      const screenshotPath = `/tmp/naukri_page_${page}.png`;
+      await puppeteerPage.screenshot({ path: screenshotPath, fullPage: true });
+      console.info('[naukri-debug] Screenshot saved to', screenshotPath);
+
+      // Extract jobs from the page content using the existing extractSearchResponse function
+      const searchResp = extractSearchResponse(html);
       if (!searchResp || !searchResp.jobDetails) {
-        console.warn(`[naukri] Could not extract search response on page ${page}`);
+        console.warn(`[naukri-debug] No jobDetails extracted on page ${page}`);
+        await browser.close();
         break;
       }
 
       const rawJobs = searchResp.jobDetails;
-      console.log(`[naukri] Page ${page} → ${rawJobs.length} listings`);
-
-      if (rawJobs.length === 0) break;
+      console.info(`[naukri-debug] Page ${page} → ${rawJobs.length} raw job entries`);
 
       for (const raw of rawJobs) {
         const normalized = normalizeNaukriJob(raw);
@@ -167,12 +185,59 @@ export async function fetchJobs({ query, location, pages = 1 }) {
         }
       }
 
+      await browser.close();
     } catch (err) {
-      if (err instanceof FetchError) throw err;
-      throw new FetchError(
-        `[naukri] Request failed on page ${page}: ${err.message}`,
-        err.response?.status || 500
-      );
+      console.error(`[naukri-debug] Error on page ${page}:`, err);
+      throw err;
+    }
+
+    if (page < pages) await sleep(DELAY_MS);
+  }    for (let page = 1; page <= pages; page++) {
+    const url = buildUrl(query, location, page);
+    console.info('[naukri-debug] Fetching page', page, 'URL:', url);
+
+    try {
+      // Launch browser (production uses sparticuz chromium)
+      const browser = await launchBrowser();
+      const puppeteerPage = await browser.newPage();
+      console.info('[naukri-debug] Browser launched, navigating...');
+      await puppeteerPage.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+
+      // Wait for job cards to appear – use the selector we discovered
+      await puppeteerPage.waitForSelector('[data-job-id]', { timeout: 15000 }).catch(() => {
+        console.warn('[naukri-debug] Selector [data-job-id] not found within timeout');
+      });
+
+      const html = await puppeteerPage.content();
+      console.info('[naukri-debug] HTML snippet (first 300 chars):', html.slice(0, 300).replace(/\n/g, ''));
+
+      // Save a screenshot for remote debugging (Render keeps /tmp for the life of the process)
+      const screenshotPath = `/tmp/naukri_page_${page}.png`;
+      await puppeteerPage.screenshot({ path: screenshotPath, fullPage: true });
+      console.info('[naukri-debug] Screenshot saved to', screenshotPath);
+
+      // Extract jobs from the page content using the existing extractSearchResponse function
+      const searchResp = extractSearchResponse(html);
+      if (!searchResp || !searchResp.jobDetails) {
+        console.warn(`[naukri-debug] No jobDetails extracted on page ${page}`);
+        await browser.close();
+        break;
+      }
+
+      const rawJobs = searchResp.jobDetails;
+      console.info(`[naukri-debug] Page ${page} → ${rawJobs.length} raw job entries`);
+
+      for (const raw of rawJobs) {
+        const normalized = normalizeNaukriJob(raw);
+        if (normalized.externalId && normalized.title && normalized.company) {
+          results.push(normalized);
+        }
+      }
+
+      await browser.close();
+    } catch (err) {
+      console.error(`[naukri-debug] Error on page ${page}:`, err);
+      throw err;
     }
 
     if (page < pages) await sleep(DELAY_MS);
